@@ -293,6 +293,38 @@ const App = () => {
       {/* Header */}
       {/* <Header /> */}
 
+      {/* Desktop Navigation - Vertical */}
+      <div className="hidden lg:flex lg:flex-col lg:h-full">
+        <button
+          onClick={() => setActiveTab("map")}
+          className={`flex flex-col items-center py-4 px-2 text-xs font-medium border-r-2 transition-colors ${
+            activeTab === "map" ? "border-red-500 text-red-600 bg-red-50" : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+          }`}>
+          <MapPin className="w-6 h-6 mb-1" />
+          <span className="text-center">安全地圖</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("reports")}
+          className={`flex flex-col items-center py-4 px-2 text-xs font-medium border-r-2 transition-colors ${
+            activeTab === "community"
+              ? "border-red-500 text-red-600 bg-red-50"
+              : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+          }`}>
+          <Users className="w-6 h-6 mb-1" />
+          <span className="text-center">社群回報</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("profile")}
+          className={`flex flex-col items-center py-4 px-2 text-xs font-medium border-r-2 transition-colors ${
+            activeTab === "profile"
+              ? "border-red-500 text-red-600 bg-red-50"
+              : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+          }`}>
+          <User className="w-6 h-6 mb-1" />
+          <span className="text-center">個人檔案</span>
+        </button>
+      </div>
+
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === "map" && (
@@ -328,7 +360,7 @@ const App = () => {
       {/* <StatsFooter reportsCount={reports.length} /> */}
 
       {/* Navigation - Mobile: Bottom, Desktop: Left Side */}
-      <div className="bg-white border-b lg:border-b-0 lg:border-r lg:w-20 lg:flex-shrink-0">
+      <div className="bg-white border-b lg:border-b-0 lg:border-r lg:w-20 lg:flex-shrink-0 lg:hidden">
         {/* Mobile Navigation - Horizontal */}
         <div className="flex lg:hidden">
           <button
@@ -340,12 +372,12 @@ const App = () => {
             安全地圖
           </button>
           <button
-            onClick={() => setActiveTab("community")}
+            onClick={() => setActiveTab("reports")}
             className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
               activeTab === "community" ? "border-red-500 text-red-600" : "border-transparent text-gray-600 hover:text-gray-900"
             }`}>
             <Users className="w-4 h-4 inline mr-2" />
-            Community
+            社群回報
           </button>
           <button
             onClick={() => setActiveTab("profile")}
@@ -353,39 +385,7 @@ const App = () => {
               activeTab === "profile" ? "border-red-500 text-red-600" : "border-transparent text-gray-600 hover:text-gray-900"
             }`}>
             <User className="w-4 h-4 inline mr-2" />
-            Profile
-          </button>
-        </div>
-
-        {/* Desktop Navigation - Vertical */}
-        <div className="hidden lg:flex lg:flex-col lg:h-full">
-          <button
-            onClick={() => setActiveTab("map")}
-            className={`flex flex-col items-center py-4 px-2 text-xs font-medium border-r-2 transition-colors ${
-              activeTab === "map" ? "border-red-500 text-red-600 bg-red-50" : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-            }`}>
-            <MapPin className="w-6 h-6 mb-1" />
-            <span className="text-center">Safety Map</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("community")}
-            className={`flex flex-col items-center py-4 px-2 text-xs font-medium border-r-2 transition-colors ${
-              activeTab === "community"
-                ? "border-red-500 text-red-600 bg-red-50"
-                : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-            }`}>
-            <Users className="w-6 h-6 mb-1" />
-            <span className="text-center">Community</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("profile")}
-            className={`flex flex-col items-center py-4 px-2 text-xs font-medium border-r-2 transition-colors ${
-              activeTab === "profile"
-                ? "border-red-500 text-red-600 bg-red-50"
-                : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-            }`}>
-            <User className="w-6 h-6 mb-1" />
-            <span className="text-center">Profile</span>
+            個人檔案
           </button>
         </div>
       </div>
