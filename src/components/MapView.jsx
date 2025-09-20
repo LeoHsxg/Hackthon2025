@@ -27,14 +27,23 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
   const mapOptions = useMemo(
     () => ({
       disableDefaultUI: false,
-      clickableIcons: true,
+      clickableIcons: false,
       scrollwheel: true,
+      // streetViewControl: false,
+      // mapTypeControl: false,
+      fullscreenControl: false,
+      zoomControl: true,
       styles: [
         {
           featureType: "poi",
           elementType: "labels",
           stylers: [{ visibility: "off" }],
         },
+        // {
+        //   featureType: "poi",
+        //   elementType: "geometry",
+        //   stylers: [{ visibility: "off" }],
+        // },
       ],
     }),
     []
@@ -44,7 +53,7 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
   const markers = useMemo(() => {
     // 將報告按位置分組 - 使用更精確的分組
     const locationGroups = {};
-    
+
     reports.forEach(report => {
       // 使用5位小數進行更精確的分組 (約11米精度)
       const key = `${report.coordinates.lat.toFixed(5)},${report.coordinates.lng.toFixed(5)}`;
@@ -54,17 +63,17 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
           reports: [],
           count: 0,
           location: report.location,
-          severity: 'low' // 預設為低危險
+          severity: "low", // 預設為低危險
         };
       }
       locationGroups[key].reports.push(report);
       locationGroups[key].count++;
-      
+
       // 更新最高危險等級
-      if (report.severity === 'high') {
-        locationGroups[key].severity = 'high';
-      } else if (report.severity === 'medium' && locationGroups[key].severity !== 'high') {
-        locationGroups[key].severity = 'medium';
+      if (report.severity === "high") {
+        locationGroups[key].severity = "high";
+      } else if (report.severity === "medium" && locationGroups[key].severity !== "high") {
+        locationGroups[key].severity = "medium";
       }
     });
 
@@ -78,22 +87,22 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
         reports: group.reports,
         location: group.location,
         severity: group.severity,
-        title: `${group.count} report${group.count > 1 ? 's' : ''} at ${group.location}`
+        title: `${group.count} report${group.count > 1 ? "s" : ""} at ${group.location}`,
       }));
   }, [reports]);
 
   // 根據報告數量確定顏色
-  const getColorByCount = (count) => {
+  const getColorByCount = count => {
     if (count >= 5) return "#ef4444"; // red - 5+ reports
-    if (count >= 3) return "#eab308"; // yellow - 3-4 reports  
+    if (count >= 3) return "#eab308"; // yellow - 3-4 reports
     if (count >= 1) return "#22c55e"; // green - 1-2 reports
     return "#6b7280"; // gray - no reports
   };
 
   // 創建帶數字的自定義標記圖標
-  const getMarkerIcon = (count) => {
+  const getMarkerIcon = count => {
     const color = getColorByCount(count);
-    
+
     // 創建 SVG 圖標
     const svg = `
       <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
@@ -101,11 +110,11 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
         <text x="20" y="26" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">${count}</text>
       </svg>
     `;
-    
+
     return {
       url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
       scaledSize: new window.google.maps.Size(40, 40),
-      anchor: new window.google.maps.Point(20, 20)
+      anchor: new window.google.maps.Point(20, 20),
     };
   };
 
@@ -114,25 +123,28 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
   }, []);
 
   // 處理地圖點擊事件
-  const handleMapClick = useCallback((event) => {
-    // 檢查是否點擊在標記上，如果是則不處理地圖點擊
-    if (event.placeId) {
-      return;
-    }
-    
-    const lat = event.latLng.lat();
-    const lng = event.latLng.lng();
-    const coordinates = { lat, lng };
-    
-    setClickedLocation(coordinates);
-    setSelectedMarkerId(null); // 清除選中的標記
-    setPopupMarker(null); // 關閉彈出窗口
-    
-    // 通知父組件地圖被點擊
-    if (onMapClick) {
-      onMapClick(coordinates);
-    }
-  }, [onMapClick]);
+  const handleMapClick = useCallback(
+    event => {
+      // 檢查是否點擊在標記上，如果是則不處理地圖點擊
+      if (event.placeId) {
+        return;
+      }
+
+      const lat = event.latLng.lat();
+      const lng = event.latLng.lng();
+      const coordinates = { lat, lng };
+
+      setClickedLocation(coordinates);
+      setSelectedMarkerId(null); // 清除選中的標記
+      setPopupMarker(null); // 關閉彈出窗口
+
+      // 通知父組件地圖被點擊
+      if (onMapClick) {
+        onMapClick(coordinates);
+      }
+    },
+    [onMapClick]
+  );
 
   if (!isLoaded) {
     return (
@@ -162,174 +174,156 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
 
   return (
     <div className="h-full relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-green-50 rounded-lg">
-        <div className="p-4 h-full flex flex-col">
-          <div className="mb-4 flex justify-between items-center">
-            <h3 className="text-lg font-semibold flex items-center">
-              <MapPin className="w-5 h-5 mr-2" />
-              Safety Map View
-            </h3>
-            <div className="flex flex-col items-end space-y-2">
-              <button
-                onClick={onShowReportModal}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors z-20 relative">
-                <Plus className="w-4 h-4 mr-2" />
-                Report Issue
-              </button>
-              <div className="text-xs text-gray-500 text-right">
-                Click on map or existing markers<br/>to select location
-              </div>
-            </div>
-          </div>
+      <button
+        onClick={onShowReportModal}
+        className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors z-20">
+        <Plus className="w-4 h-4 mr-2" />
+        Report Issue
+      </button>
 
-          {/* Google Maps */}
-          <div className="flex-1 rounded-lg relative" style={{ zIndex: 0 }}>
-            <GoogleMap 
-              mapContainerStyle={{ width: "100%", height: "100%" }} 
-              center={center} 
-              zoom={16} 
-              onLoad={onLoad} 
-              options={mapOptions}
-              onClick={handleMapClick}
-            >
-              {/* 地圖標記點 */}
-              {markers.map(marker => (
-                <Marker
-                  key={marker.id}
-                  position={marker.position}
-                  title={marker.title}
-                  icon={getMarkerIcon(marker.count)}
-                  onClick={(event) => {
-                    // 阻止事件冒泡到地圖
-                    event.stop();
-                    console.log(`點擊了標記: ${marker.title}`, marker.reports);
-                    
-                    // 顯示彈出窗口
-                    setPopupMarker(marker);
-                    
-                    // 更新本地狀態
-                    setClickedLocation(marker.position);
-                    setSelectedMarkerId(marker.id);
-                    
-                    // 選擇該位置進行報告
-                    if (onMarkerClick) {
-                      onMarkerClick(marker.position);
-                    }
-                  }}
-                />
-              ))}
-              
-              {/* 點擊位置標記 */}
-              {clickedLocation && (
-                <Marker
-                  position={clickedLocation}
-                  title="Selected Location"
-                  icon={{
-                    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+      {/* Google Maps */}
+      <div className="flex-1 rounded-lg relative h-full" style={{ zIndex: 0 }}>
+        <GoogleMap
+          mapContainerStyle={{ width: "100%", height: "100%" }}
+          center={center}
+          zoom={16}
+          onLoad={onLoad}
+          options={mapOptions}
+          onClick={handleMapClick}>
+          {/* 地圖標記點 */}
+          {markers.map(marker => (
+            <Marker
+              key={marker.id}
+              position={marker.position}
+              title={marker.title}
+              icon={getMarkerIcon(marker.count)}
+              onClick={event => {
+                // 阻止事件冒泡到地圖
+                event.stop();
+                console.log(`點擊了標記: ${marker.title}`, marker.reports);
+
+                // 顯示彈出窗口
+                setPopupMarker(marker);
+
+                // 更新本地狀態
+                setClickedLocation(marker.position);
+                setSelectedMarkerId(marker.id);
+
+                // 選擇該位置進行報告
+                if (onMarkerClick) {
+                  onMarkerClick(marker.position);
+                }
+              }}
+            />
+          ))}
+
+          {/* 點擊位置標記 */}
+          {clickedLocation && (
+            <Marker
+              position={clickedLocation}
+              title="Selected Location"
+              icon={{
+                url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
                       <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="15" cy="15" r="12" fill="#3b82f6" stroke="#ffffff" stroke-width="3"/>
                         <circle cx="15" cy="15" r="6" fill="#ffffff"/>
                       </svg>
                     `)}`,
-                    scaledSize: new window.google.maps.Size(30, 30),
-                    anchor: new window.google.maps.Point(15, 15)
-                  }}
-                />
-              )}
-            </GoogleMap>
+                scaledSize: new window.google.maps.Size(30, 30),
+                anchor: new window.google.maps.Point(15, 15),
+              }}
+            />
+          )}
+        </GoogleMap>
 
-            {/* 報告彈出窗口 */}
-            {popupMarker && (
-              <div className="absolute top-16 left-4 right-4 bg-white rounded-lg shadow-xl border max-h-80 overflow-y-auto z-10">
-                <div className="p-4 border-b bg-gray-50 rounded-t-lg">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{popupMarker.location}</h3>
-                      <p className="text-sm text-gray-600">{popupMarker.count} report{popupMarker.count > 1 ? 's' : ''}</p>
-                    </div>
-                    <button
-                      onClick={() => setPopupMarker(null)}
-                      className="p-1 hover:bg-gray-200 rounded-full transition-colors"
-                    >
-                      <X className="w-4 h-4 text-gray-500" />
-                    </button>
-                  </div>
+        {/* 報告彈出窗口 */}
+        {popupMarker && (
+          <div className="absolute top-16 left-4 right-4 bg-white rounded-lg shadow-xl border max-h-80 overflow-y-auto z-10">
+            <div className="p-4 border-b bg-gray-50 rounded-t-lg">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="font-semibold text-gray-900">{popupMarker.location}</h3>
+                  <p className="text-sm text-gray-600">
+                    {popupMarker.count} report{popupMarker.count > 1 ? "s" : ""}
+                  </p>
                 </div>
-                
-                <div className="p-4 space-y-3">
-                  {popupMarker.reports.map((report, index) => (
-                    <div key={report.id} className="border-b border-gray-100 pb-3 last:border-b-0">
-                      <div className="flex items-start space-x-3">
-                        <span className="text-2xl flex-shrink-0">
-                          {reportTypes.find(t => t.id === report.type)?.icon || "⚠️"}
+                <button onClick={() => setPopupMarker(null)} className="p-1 hover:bg-gray-200 rounded-full transition-colors">
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4 space-y-3">
+              {popupMarker.reports.map((report, index) => (
+                <div key={report.id} className="border-b border-gray-100 pb-3 last:border-b-0">
+                  <div className="flex items-start space-x-3">
+                    <span className="text-2xl flex-shrink-0">{reportTypes.find(t => t.id === report.type)?.icon || "⚠️"}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <h4 className="font-medium text-gray-900 truncate">{report.title}</h4>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            report.severity === "high"
+                              ? "bg-red-100 text-red-800"
+                              : report.severity === "medium"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-green-100 text-green-800"
+                          }`}>
+                          {report.severity.toUpperCase()}
                         </span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <h4 className="font-medium text-gray-900 truncate">{report.title}</h4>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              report.severity === 'high' ? 'bg-red-100 text-red-800' :
-                              report.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-green-100 text-green-800'
-                            }`}>
-                              {report.severity.toUpperCase()}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{report.description}</p>
-                          <div className="flex items-center justify-between text-xs text-gray-500">
-                            <div className="flex items-center space-x-3">
-                              <span>👍 {report.upvotes}</span>
-                              <span>👎 {report.downvotes}</span>
-                              <div className="flex items-center space-x-1">
-                                <MessageSquare className="w-3 h-3" />
-                                <span>{report.comments}</span>
-                              </div>
-                            </div>
-                            <span>{new Date(report.reportedAt).toLocaleDateString()}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">{report.description}</p>
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex items-center space-x-3">
+                          <span>👍 {report.upvotes}</span>
+                          <span>👎 {report.downvotes}</span>
+                          <div className="flex items-center space-x-1">
+                            <MessageSquare className="w-3 h-3" />
+                            <span>{report.comments}</span>
                           </div>
                         </div>
+                        <span>{new Date(report.reportedAt).toLocaleDateString()}</span>
                       </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
+          </div>
+        )}
 
-            {/* 點擊位置信息 */}
-            {clickedLocation && (
-              <div className="absolute top-2 left-2 bg-blue-500 text-white rounded-lg shadow-lg p-3 pointer-events-none">
-                <div className="text-xs font-semibold mb-1">
-                  {selectedMarkerId ? "📍 Marker Selected" : "📍 Location Selected"}
-                </div>
-                <div className="text-xs">
-                  <div>Lat: {clickedLocation.lat.toFixed(6)}</div>
-                  <div>Lng: {clickedLocation.lng.toFixed(6)}</div>
-                </div>
-              </div>
-            )}
+        {/* 點擊位置信息 */}
+        {clickedLocation && (
+          <div className="absolute top-2 left-2 bg-blue-500 text-white rounded-lg shadow-lg p-3 pointer-events-none">
+            <div className="text-xs font-semibold mb-1">{selectedMarkerId ? "📍 Marker Selected" : "📍 Location Selected"}</div>
+            <div className="text-xs">
+              <div>Lat: {clickedLocation.lat.toFixed(6)}</div>
+              <div>Lng: {clickedLocation.lng.toFixed(6)}</div>
+            </div>
+          </div>
+        )}
 
-            {/* 報告數量圖例 */}
-            <div className="absolute top-2 right-2 bg-white rounded-lg shadow-lg p-3 pointer-events-none">
-              <div className="text-xs text-gray-600 mb-2 font-semibold">Reports Count</div>
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">5+</span>
-                  </div>
-                  <span className="text-xs">5+ Reports</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">3</span>
-                  </div>
-                  <span className="text-xs">3-4 Reports</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">1</span>
-                  </div>
-                  <span className="text-xs">1-2 Reports</span>
-                </div>
+        {/* 報告數量圖例 */}
+        <div className="absolute top-2 right-2 bg-white rounded-lg shadow-lg p-3 pointer-events-none">
+          <div className="text-xs text-gray-600 mb-2 font-semibold">Reports Count</div>
+          <div className="space-y-1">
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">5+</span>
               </div>
+              <span className="text-xs">5+ Reports</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">3</span>
+              </div>
+              <span className="text-xs">3-4 Reports</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs font-bold">1</span>
+              </div>
+              <span className="text-xs">1-2 Reports</span>
             </div>
           </div>
         </div>

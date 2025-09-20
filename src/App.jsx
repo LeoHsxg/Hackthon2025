@@ -31,7 +31,7 @@ const App = () => {
   // 生成分組報告數據
   const groupedReports = React.useMemo(() => {
     const locationGroups = {};
-    
+
     reports.forEach(report => {
       const key = `${report.coordinates.lat.toFixed(5)},${report.coordinates.lng.toFixed(5)}`;
       if (!locationGroups[key]) {
@@ -40,17 +40,17 @@ const App = () => {
           reports: [],
           count: 0,
           location: report.location,
-          severity: 'low'
+          severity: "low",
         };
       }
       locationGroups[key].reports.push(report);
       locationGroups[key].count++;
-      
+
       // 更新最高危險等級
-      if (report.severity === 'high') {
-        locationGroups[key].severity = 'high';
-      } else if (report.severity === 'medium' && locationGroups[key].severity !== 'high') {
-        locationGroups[key].severity = 'medium';
+      if (report.severity === "high") {
+        locationGroups[key].severity = "high";
+      } else if (report.severity === "medium" && locationGroups[key].severity !== "high") {
+        locationGroups[key].severity = "medium";
       }
     });
 
@@ -63,11 +63,11 @@ const App = () => {
         reports: group.reports,
         location: group.location,
         severity: group.severity,
-        title: `${group.count} report${group.count > 1 ? 's' : ''} at ${group.location}`
+        title: `${group.count} report${group.count > 1 ? "s" : ""} at ${group.location}`,
       }));
   }, [reports]);
 
-  const toggleGroupExpansion = (groupId) => {
+  const toggleGroupExpansion = groupId => {
     const newExpanded = new Set(expandedGroups);
     if (newExpanded.has(groupId)) {
       newExpanded.delete(groupId);
@@ -78,12 +78,12 @@ const App = () => {
   };
 
   // 處理地圖點擊事件
-  const handleMapClick = (coordinates) => {
+  const handleMapClick = coordinates => {
     setSelectedCoordinates(coordinates);
   };
 
   // 處理標記點擊事件 - 選擇該位置進行報告
-  const handleMarkerClick = (coordinates) => {
+  const handleMarkerClick = coordinates => {
     setSelectedCoordinates(coordinates);
   };
 
@@ -165,7 +165,6 @@ const App = () => {
     }
   };
 
-
   const handleVote = (reportId, voteType) => {
     setReports(
       reports.map(report => {
@@ -237,10 +236,7 @@ const App = () => {
                           Lat: {selectedCoordinates.lat.toFixed(6)}, Lng: {selectedCoordinates.lng.toFixed(6)}
                         </div>
                       </div>
-                      <button
-                        onClick={() => setSelectedCoordinates(null)}
-                        className="text-xs text-red-600 hover:text-red-700 underline"
-                      >
+                      <button onClick={() => setSelectedCoordinates(null)} className="text-xs text-red-600 hover:text-red-700 underline">
                         Clear
                       </button>
                     </div>
@@ -288,9 +284,41 @@ const App = () => {
     );
 
   return (
-    <div className="max-w-4xl mx-auto h-screen bg-gray-50 flex flex-col">
+    <div className="mx-auto h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <Header />
+      {/* <Header /> */}
+
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        {activeTab === "map" && (
+          <MapView
+            reports={reports}
+            onShowReportModal={() => setShowReportModal(true)}
+            onMapClick={handleMapClick}
+            onMarkerClick={handleMarkerClick}
+          />
+        )}
+        {activeTab === "reports" && (
+          <ReportsView
+            groupedReports={groupedReports}
+            expandedGroups={expandedGroups}
+            onToggleGroup={toggleGroupExpansion}
+            onVote={handleVote}
+            onSelectReport={setSelectedReport}
+            getSeverityColor={getSeverityColor}
+            getStatusColor={getStatusColor}
+          />
+        )}
+        {activeTab === "danger" && (
+          <DangerLevelsView roadDangerData={roadDangerData} getSeverityColor={getSeverityColor} getRoadDangerColor={getRoadDangerColor} />
+        )}
+      </div>
+
+      {/* Report Modal */}
+      <ReportModal />
+
+      {/* Stats Footer */}
+      {/* <StatsFooter reportsCount={reports.length} /> */}
 
       {/* Navigation */}
       <div className="bg-white border-b">
@@ -321,34 +349,8 @@ const App = () => {
           </button>
         </div>
       </div>
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        {activeTab === "map" && <MapView reports={reports} onShowReportModal={() => setShowReportModal(true)} onMapClick={handleMapClick} onMarkerClick={handleMarkerClick} />}
-        {activeTab === "reports" && (
-          <ReportsView
-            groupedReports={groupedReports}
-            expandedGroups={expandedGroups}
-            onToggleGroup={toggleGroupExpansion}
-            onVote={handleVote}
-            onSelectReport={setSelectedReport}
-            getSeverityColor={getSeverityColor}
-            getStatusColor={getStatusColor}
-          />
-        )}
-        {activeTab === "danger" && (
-          <DangerLevelsView roadDangerData={roadDangerData} getSeverityColor={getSeverityColor} getRoadDangerColor={getRoadDangerColor} />
-        )}
-      </div>
-
-      {/* Report Modal */}
-      <ReportModal />
-
-      {/* Stats Footer */}
-      <StatsFooter reportsCount={reports.length} />
     </div>
   );
 };
 
 export default App;
-
