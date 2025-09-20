@@ -6,7 +6,7 @@ const ReportsView = ({ groupedReports, expandedGroups, onToggleGroup, onVote, on
   return (
     <div className="h-full p-4">
       <div className="mb-4 flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Community Reports</h3>
+        <h3 className="text-lg font-semibold">社群回報</h3>
         <div className="flex space-x-2">
           <button className="p-2 border rounded-lg hover:bg-gray-50">
             <Filter className="w-4 h-4" />
@@ -43,7 +43,7 @@ const ReportsView = ({ groupedReports, expandedGroups, onToggleGroup, onVote, on
                   <div>
                     <h4 className="font-semibold text-gray-900">{group.location}</h4>
                     <p className="text-sm text-gray-600">
-                      {group.count} report{group.count > 1 ? "s" : ""}
+                      {group.count} 個回報
                     </p>
                   </div>
                 </div>
@@ -97,7 +97,7 @@ const ReportsView = ({ groupedReports, expandedGroups, onToggleGroup, onVote, on
                         </div>
                       </div>
                       <button onClick={() => onSelectReport(report)} className="text-blue-600 hover:text-blue-700 text-xs font-medium">
-                        View Details
+                        查看詳情
                       </button>
                     </div>
                   </div>

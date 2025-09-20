@@ -106,10 +106,10 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
 
   // 根據報告數量確定顏色
   const getColorByCount = count => {
-    if (count >= 5) return "#ef4444"; // red - 5+ reports
-    if (count >= 3) return "#eab308"; // yellow - 3-4 reports
-    if (count >= 1) return "#22c55e"; // green - 1-2 reports
-    return "#6b7280"; // gray - no reports
+    if (count >= 5) return "#ef4444"; // 紅色 - 5+ 個回報
+    if (count >= 3) return "#eab308"; // 黃色 - 3-4 個回報
+    if (count >= 1) return "#22c55e"; // 綠色 - 1-2 個回報
+    return "#6b7280"; // 灰色 - 無回報
   };
 
   // 創建帶數字的自定義標記圖標
