@@ -6,7 +6,7 @@ const MapView = ({ onShowReportModal }) => {
   // Google Maps API 配置
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: "AIzaSyArfTXU_iFH_PvWzXXpqP9jvuQw84Co4e4",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
   });
 
   // 地圖中心點（台北市）
