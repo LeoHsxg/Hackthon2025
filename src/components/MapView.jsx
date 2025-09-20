@@ -105,7 +105,8 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
     return {
       url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
       scaledSize: new window.google.maps.Size(40, 40),
-      anchor: new window.google.maps.Point(20, 20),
+      size: new window.google.maps.Size(40, 40),
+      anchor: new window.google.maps.Point(28, 28),
     };
   };
 
@@ -229,7 +230,7 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
 
         {/* 報告彈出窗口 */}
         {popupMarker && (
-          <div className="absolute top-16 left-4 right-4 bg-white rounded-lg shadow-xl border max-h-80 overflow-y-auto z-10">
+          <div className="absolute top-1/2 left-4 right-4 -translate-y-1/2 bg-white rounded-lg shadow-xl border max-h-[30rem] overflow-y-auto z-10">
             <div className="p-4 border-b bg-gray-50 rounded-t-lg">
               <div className="flex justify-between items-center">
                 <div>
@@ -285,7 +286,7 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
 
         {/* 點擊位置信息 */}
         {clickedLocation && (
-          <div className="absolute top-2 left-2 bg-blue-500 text-white rounded-lg shadow-lg p-3 pointer-events-none">
+          <div className="absolute top-16 left-2 bg-blue-500 text-white rounded-lg shadow-lg p-3 pointer-events-none">
             <div className="text-xs font-semibold mb-1">{selectedMarkerId ? "📍 Marker Selected" : "📍 Location Selected"}</div>
             <div className="text-xs">
               <div>Lat: {clickedLocation.lat.toFixed(6)}</div>
