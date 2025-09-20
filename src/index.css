@@ -74,3 +74,22 @@ ol, ul {
 .gm-style .gm-style-iw-d {
     display: none !important;
 }
+
+/* 隱藏右下角的縮放和移動控制 */
+.gm-style .gm-style-cc {
+    display: none !important;
+}
+
+/* 隱藏縮放控制 */
+.gm-style .gm-style-iw-d + div {
+    display: none !important;
+}
+
+/* 隱藏所有地圖控制按鈕 */
+.gm-style .gm-style-cc,
+.gm-style .gm-style-iw-d,
+.gm-style .gm-style-iw-c,
+.gm-style .gm-style-iw-t,
+.gm-style .gm-style-iw-b {
+    display: none !important;
+}

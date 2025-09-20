@@ -17,14 +17,11 @@ const ReportsView = ({ groupedReports, expandedGroups, onToggleGroup, onVote, on
         </div>
       </div>
 
-      <div className="space-y-3 overflow-y-auto h-96">
+      <div className="space-y-3 overflow-y-auto h-[calc(100%-50px)]">
         {groupedReports.map(group => (
           <div key={group.id} className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow">
             {/* Group Header */}
-            <div 
-              className="p-4 cursor-pointer hover:bg-gray-50"
-              onClick={() => onToggleGroup(group.id)}
-            >
+            <div className="p-4 cursor-pointer hover:bg-gray-50" onClick={() => onToggleGroup(group.id)}>
               <div className="flex justify-between items-center">
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2">
@@ -34,10 +31,10 @@ const ReportsView = ({ groupedReports, expandedGroups, onToggleGroup, onVote, on
                       <ChevronRight className="w-4 h-4 text-gray-500" />
                     )}
                     <div className="flex items-center space-x-2">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                        group.count >= 5 ? 'bg-red-500' : 
-                        group.count >= 3 ? 'bg-yellow-500' : 'bg-green-500'
-                      }`}>
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                          group.count >= 5 ? "bg-red-500" : group.count >= 3 ? "bg-yellow-500" : "bg-green-500"
+                        }`}>
                         {group.count}
                       </div>
                       <Users className="w-4 h-4 text-gray-500" />
@@ -45,7 +42,9 @@ const ReportsView = ({ groupedReports, expandedGroups, onToggleGroup, onVote, on
                   </div>
                   <div>
                     <h4 className="font-semibold text-gray-900">{group.location}</h4>
-                    <p className="text-sm text-gray-600">{group.count} report{group.count > 1 ? 's' : ''}</p>
+                    <p className="text-sm text-gray-600">
+                      {group.count} report{group.count > 1 ? "s" : ""}
+                    </p>
                   </div>
                 </div>
                 <div className="flex space-x-2">
@@ -80,11 +79,15 @@ const ReportsView = ({ groupedReports, expandedGroups, onToggleGroup, onVote, on
 
                     <div className="flex justify-between items-center">
                       <div className="flex items-center space-x-4">
-                        <button onClick={() => onVote(report.id, "upvotes")} className="flex items-center space-x-1 text-green-600 hover:text-green-700">
+                        <button
+                          onClick={() => onVote(report.id, "upvotes")}
+                          className="flex items-center space-x-1 text-green-600 hover:text-green-700">
                           <span className="text-sm">👍</span>
                           <span className="text-xs">{report.upvotes}</span>
                         </button>
-                        <button onClick={() => onVote(report.id, "downvotes")} className="flex items-center space-x-1 text-red-600 hover:text-red-700">
+                        <button
+                          onClick={() => onVote(report.id, "downvotes")}
+                          className="flex items-center space-x-1 text-red-600 hover:text-red-700">
                           <span className="text-sm">👎</span>
                           <span className="text-xs">{report.downvotes}</span>
                         </button>

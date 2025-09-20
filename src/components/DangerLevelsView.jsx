@@ -8,7 +8,7 @@ const DangerLevelsView = ({ roadDangerData, getSeverityColor, getRoadDangerColor
         <p className="text-sm text-gray-600">Based on community reports and incident frequency</p>
       </div>
 
-      <div className="space-y-3 overflow-y-auto h-96">
+      <div className="space-y-3 overflow-y-auto h-[calc(100%-50px)]">
         {Object.entries(roadDangerData).map(([road, data]) => (
           <div key={road} className="bg-white rounded-lg shadow-sm border p-4">
             <div className="flex justify-between items-center mb-2">

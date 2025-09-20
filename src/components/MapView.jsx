@@ -26,24 +26,15 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
   // 地圖選項
   const mapOptions = useMemo(
     () => ({
-      disableDefaultUI: false,
-      clickableIcons: false,
+      disableDefaultUI: true,
       scrollwheel: true,
-      // streetViewControl: false,
-      // mapTypeControl: false,
-      fullscreenControl: false,
-      zoomControl: true,
+      mapTypeControl: true,
       styles: [
         {
           featureType: "poi",
           elementType: "labels",
           stylers: [{ visibility: "off" }],
         },
-        // {
-        //   featureType: "poi",
-        //   elementType: "geometry",
-        //   stylers: [{ visibility: "off" }],
-        // },
       ],
     }),
     []
@@ -176,7 +167,7 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
     <div className="h-full relative">
       <button
         onClick={onShowReportModal}
-        className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors z-20">
+        className="absolute bottom-4 right-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors z-20">
         <Plus className="w-4 h-4 mr-2" />
         Report Issue
       </button>
