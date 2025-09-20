@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { MapPin, AlertTriangle, Clock, Users, Star, Plus, Search, Filter, Navigation, Shield, Eye, MessageSquare, User } from "lucide-react";
+import mascotImage from "./assets/墨鏡比v.png";
 import Header from "./components/Header";
 import StatsFooter from "./components/StatsFooter";
 import MapView from "./components/MapView";
@@ -289,7 +290,7 @@ const App = () => {
   }, [showReportModal, newReport, selectedCoordinates, handleSubmitReport]);
 
   return (
-    <div className="mx-auto h-screen bg-gray-50 flex flex-col lg:flex-row">
+    <div className="mx-auto h-screen bg-gray-50 flex flex-col overflow-hidden lg:flex-row">
       {/* Header */}
       {/* <Header /> */}
 
@@ -360,7 +361,20 @@ const App = () => {
       {/* <StatsFooter reportsCount={reports.length} /> */}
 
       {/* Navigation - Mobile: Bottom, Desktop: Left Side */}
-      <div className="bg-white border-b lg:border-b-0 lg:border-r lg:w-20 lg:flex-shrink-0 lg:hidden">
+      <div className="bg-white border-b lg:border-b-0 lg:border-r lg:w-20 lg:flex-shrink-0 lg:hidden relative">
+        {/* Mascot */}
+        <div className="absolute top-0 left-0 pointer-events-none z-10">
+          <img
+            src={mascotImage}
+            alt="吉祥物"
+            className="w-20 h-auto"
+            style={{
+              transformOrigin: "bottom left",
+              transform: "translateX(20px) translateY(-120px)",
+            }}
+          />
+        </div>
+
         {/* Mobile Navigation - Horizontal */}
         <div className="flex lg:hidden">
           <button
@@ -394,3 +408,4 @@ const App = () => {
 };
 
 export default App;
+
