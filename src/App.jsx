@@ -15,6 +15,7 @@ const App = () => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [_selectedReport, setSelectedReport] = useState(null);
   const [reports, setReports] = useState(initialReports);
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
 
   const [newReport, setNewReport] = useState({
     type: "",
@@ -25,6 +26,55 @@ const App = () => {
   });
 
   const [roadDangerData] = useState(roadDangerLevels);
+
+  // 生成分組報告數據
+  const groupedReports = React.useMemo(() => {
+    const locationGroups = {};
+    
+    reports.forEach(report => {
+      const key = `${report.coordinates.lat.toFixed(5)},${report.coordinates.lng.toFixed(5)}`;
+      if (!locationGroups[key]) {
+        locationGroups[key] = {
+          position: report.coordinates,
+          reports: [],
+          count: 0,
+          location: report.location,
+          severity: 'low'
+        };
+      }
+      locationGroups[key].reports.push(report);
+      locationGroups[key].count++;
+      
+      // 更新最高危險等級
+      if (report.severity === 'high') {
+        locationGroups[key].severity = 'high';
+      } else if (report.severity === 'medium' && locationGroups[key].severity !== 'high') {
+        locationGroups[key].severity = 'medium';
+      }
+    });
+
+    return Object.values(locationGroups)
+      .sort((a, b) => b.count - a.count)
+      .map((group, index) => ({
+        id: index + 1,
+        position: group.position,
+        count: group.count,
+        reports: group.reports,
+        location: group.location,
+        severity: group.severity,
+        title: `${group.count} report${group.count > 1 ? 's' : ''} at ${group.location}`
+      }));
+  }, [reports]);
+
+  const toggleGroupExpansion = (groupId) => {
+    const newExpanded = new Set(expandedGroups);
+    if (newExpanded.has(groupId)) {
+      newExpanded.delete(groupId);
+    } else {
+      newExpanded.add(groupId);
+    }
+    setExpandedGroups(newExpanded);
+  };
 
   const getSeverityColor = severity => {
     switch (severity) {
@@ -225,7 +275,9 @@ const App = () => {
         {activeTab === "map" && <MapView onShowReportModal={() => setShowReportModal(true)} />}
         {activeTab === "reports" && (
           <ReportsView
-            reports={reports}
+            groupedReports={groupedReports}
+            expandedGroups={expandedGroups}
+            onToggleGroup={toggleGroupExpansion}
             onVote={handleVote}
             onSelectReport={setSelectedReport}
             getSeverityColor={getSeverityColor}

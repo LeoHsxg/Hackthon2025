@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo } from "react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { MapPin, AlertTriangle, Clock, Users, Plus } from "lucide-react";
+import { initialReports } from "../data/reports";
 
 const MapView = ({ onShowReportModal }) => {
   // Google Maps API 配置
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: "AIzaSyArfTXU_iFH_PvWzXXpqP9jvuQw84Co4e4",
   });
 
   // 地圖中心點（台北市）
@@ -35,47 +36,72 @@ const MapView = ({ onShowReportModal }) => {
     []
   );
 
-  // 標記點數據
-  const markers = [
-    {
-      id: 1,
-      position: { lat: 24.800562, lng: 120.966711 },
-      type: "high",
-      title: "西大 - 林森路口",
-      icon: "🔧",
-    },
-    {
-      id: 2,
-      position: { lat: 24.801772, lng: 120.965742 },
-      type: "medium",
-      title: "西大 - 文昌街口",
-      icon: "⏰",
-    },
-    {
-      id: 3,
-      position: { lat: 24.802561, lng: 120.965179 },
-      type: "medium",
-      title: "西大 - 西門路口",
-      icon: "👥",
-    },
-  ];
+  // 根據報告數據生成標記點
+  const markers = useMemo(() => {
+    // 將報告按位置分組 - 使用更精確的分組
+    const locationGroups = {};
+    
+    initialReports.forEach(report => {
+      // 使用5位小數進行更精確的分組 (約11米精度)
+      const key = `${report.coordinates.lat.toFixed(5)},${report.coordinates.lng.toFixed(5)}`;
+      if (!locationGroups[key]) {
+        locationGroups[key] = {
+          position: report.coordinates,
+          reports: [],
+          count: 0,
+          location: report.location,
+          severity: 'low' // 預設為低危險
+        };
+      }
+      locationGroups[key].reports.push(report);
+      locationGroups[key].count++;
+      
+      // 更新最高危險等級
+      if (report.severity === 'high') {
+        locationGroups[key].severity = 'high';
+      } else if (report.severity === 'medium' && locationGroups[key].severity !== 'high') {
+        locationGroups[key].severity = 'medium';
+      }
+    });
 
-  // 自定義標記圖標
-  const getMarkerIcon = type => {
-    const colors = {
-      high: "#ef4444", // red-500
-      medium: "#eab308", // yellow-500
-      low: "#22c55e", // green-500
-    };
+    // 轉換為標記點數組，按報告數量排序
+    return Object.values(locationGroups)
+      .sort((a, b) => b.count - a.count) // 按報告數量降序排列
+      .map((group, index) => ({
+        id: index + 1,
+        position: group.position,
+        count: group.count,
+        reports: group.reports,
+        location: group.location,
+        severity: group.severity,
+        title: `${group.count} report${group.count > 1 ? 's' : ''} at ${group.location}`
+      }));
+  }, []);
 
+  // 根據報告數量確定顏色
+  const getColorByCount = (count) => {
+    if (count >= 5) return "#ef4444"; // red - 5+ reports
+    if (count >= 3) return "#eab308"; // yellow - 3-4 reports  
+    if (count >= 1) return "#22c55e"; // green - 1-2 reports
+    return "#6b7280"; // gray - no reports
+  };
+
+  // 創建帶數字的自定義標記圖標
+  const getMarkerIcon = (count) => {
+    const color = getColorByCount(count);
+    
+    // 創建 SVG 圖標
+    const svg = `
+      <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="18" fill="${color}" stroke="#ffffff" stroke-width="3"/>
+        <text x="20" y="26" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">${count}</text>
+      </svg>
+    `;
+    
     return {
-      path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
-      fillColor: colors[type],
-      fillOpacity: 1,
-      strokeColor: "#ffffff",
-      strokeWeight: 2,
-      scale: 1.5,
-      anchor: new window.google.maps.Point(12, 24), // 設定錨點為圖標底部中心
+      url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+      scaledSize: new window.google.maps.Size(40, 40),
+      anchor: new window.google.maps.Point(20, 20)
     };
   };
 
@@ -135,28 +161,36 @@ const MapView = ({ onShowReportModal }) => {
                   key={marker.id}
                   position={marker.position}
                   title={marker.title}
-                  icon={getMarkerIcon(marker.type)}
+                  icon={getMarkerIcon(marker.count)}
                   onClick={() => {
-                    console.log(`點擊了標記: ${marker.title}`);
+                    console.log(`點擊了標記: ${marker.title}`, marker.reports);
                   }}
                 />
               ))}
             </GoogleMap>
 
-            {/* 危險等級圖例 - 移到地圖容器外 */}
-            <div className="absolute top-2 right-2 bg-white rounded-lg shadow-lg p-2 pointer-events-none">
-              <div className="text-xs text-gray-600 mb-1">Road Danger Level</div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <span className="text-xs">High</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                <span className="text-xs">Medium</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                <span className="text-xs">Low</span>
+            {/* 報告數量圖例 */}
+            <div className="absolute top-2 right-2 bg-white rounded-lg shadow-lg p-3 pointer-events-none">
+              <div className="text-xs text-gray-600 mb-2 font-semibold">Reports Count</div>
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">5+</span>
+                  </div>
+                  <span className="text-xs">5+ Reports</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">3</span>
+                  </div>
+                  <span className="text-xs">3-4 Reports</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">1</span>
+                  </div>
+                  <span className="text-xs">1-2 Reports</span>
+                </div>
               </div>
             </div>
           </div>
