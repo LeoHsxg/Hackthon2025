@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { MapPin, AlertTriangle, Clock, Users, Star, Plus, Search, Filter, Navigation, Shield, Eye, MessageSquare } from "lucide-react";
+import { MapPin, AlertTriangle, Clock, Users, Star, Plus, Search, Filter, Navigation, Shield, Eye, MessageSquare, User } from "lucide-react";
 import Header from "./components/Header";
 import StatsFooter from "./components/StatsFooter";
 import MapView from "./components/MapView";
 import ReportsView from "./components/ReportsView";
 import DangerLevelsView from "./components/DangerLevelsView";
+import CommunityView from "./components/CommunityView";
+import ProfileView from "./components/ProfileView";
 import { initialReports } from "./data/reports";
 import { roadDangerLevels } from "./data/roadDangerLevels";
 import { reportTypes } from "./data/reportTypes";
@@ -284,7 +286,7 @@ const App = () => {
     );
 
   return (
-    <div className="mx-auto h-screen bg-gray-50 flex flex-col">
+    <div className="mx-auto h-screen bg-gray-50 flex flex-col lg:flex-row">
       {/* Header */}
       {/* <Header /> */}
 
@@ -312,6 +314,8 @@ const App = () => {
         {activeTab === "danger" && (
           <DangerLevelsView roadDangerData={roadDangerData} getSeverityColor={getSeverityColor} getRoadDangerColor={getRoadDangerColor} />
         )}
+        {activeTab === "community" && <CommunityView />}
+        {activeTab === "profile" && <ProfileView />}
       </div>
 
       {/* Report Modal */}
@@ -320,9 +324,10 @@ const App = () => {
       {/* Stats Footer */}
       {/* <StatsFooter reportsCount={reports.length} /> */}
 
-      {/* Navigation */}
-      <div className="bg-white border-b">
-        <div className="flex">
+      {/* Navigation - Mobile: Bottom, Desktop: Left Side */}
+      <div className="bg-white border-b lg:border-b-0 lg:border-r lg:w-20 lg:flex-shrink-0">
+        {/* Mobile Navigation - Horizontal */}
+        <div className="flex lg:hidden">
           <button
             onClick={() => setActiveTab("map")}
             className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
@@ -332,20 +337,52 @@ const App = () => {
             Safety Map
           </button>
           <button
-            onClick={() => setActiveTab("reports")}
+            onClick={() => setActiveTab("community")}
             className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === "reports" ? "border-red-500 text-red-600" : "border-transparent text-gray-600 hover:text-gray-900"
+              activeTab === "community" ? "border-red-500 text-red-600" : "border-transparent text-gray-600 hover:text-gray-900"
             }`}>
-            <AlertTriangle className="w-4 h-4 inline mr-2" />
-            Reports ({reports.length})
+            <Users className="w-4 h-4 inline mr-2" />
+            Community
           </button>
           <button
-            onClick={() => setActiveTab("danger")}
+            onClick={() => setActiveTab("profile")}
             className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === "danger" ? "border-red-500 text-red-600" : "border-transparent text-gray-600 hover:text-gray-900"
+              activeTab === "profile" ? "border-red-500 text-red-600" : "border-transparent text-gray-600 hover:text-gray-900"
             }`}>
-            <Navigation className="w-4 h-4 inline mr-2" />
-            Road Analysis
+            <User className="w-4 h-4 inline mr-2" />
+            Profile
+          </button>
+        </div>
+
+        {/* Desktop Navigation - Vertical */}
+        <div className="hidden lg:flex lg:flex-col lg:h-full">
+          <button
+            onClick={() => setActiveTab("map")}
+            className={`flex flex-col items-center py-4 px-2 text-xs font-medium border-r-2 transition-colors ${
+              activeTab === "map" ? "border-red-500 text-red-600 bg-red-50" : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+            }`}>
+            <MapPin className="w-6 h-6 mb-1" />
+            <span className="text-center">Safety Map</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("community")}
+            className={`flex flex-col items-center py-4 px-2 text-xs font-medium border-r-2 transition-colors ${
+              activeTab === "community"
+                ? "border-red-500 text-red-600 bg-red-50"
+                : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+            }`}>
+            <Users className="w-6 h-6 mb-1" />
+            <span className="text-center">Community</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("profile")}
+            className={`flex flex-col items-center py-4 px-2 text-xs font-medium border-r-2 transition-colors ${
+              activeTab === "profile"
+                ? "border-red-500 text-red-600 bg-red-50"
+                : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+            }`}>
+            <User className="w-6 h-6 mb-1" />
+            <span className="text-center">Profile</span>
           </button>
         </div>
       </div>
