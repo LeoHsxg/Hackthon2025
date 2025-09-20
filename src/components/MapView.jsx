@@ -1,11 +1,13 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
-import { MapPin, AlertTriangle, Clock, Users, Plus } from "lucide-react";
+import { MapPin, AlertTriangle, Clock, Users, Plus, X, MessageSquare } from "lucide-react";
 import { initialReports } from "../data/reports";
+import { reportTypes } from "../data/reportTypes";
 
 const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initialReports }) => {
   const [clickedLocation, setClickedLocation] = useState(null);
   const [selectedMarkerId, setSelectedMarkerId] = useState(null);
+  const [popupMarker, setPopupMarker] = useState(null);
   // Google Maps API 配置
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -124,6 +126,7 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
     
     setClickedLocation(coordinates);
     setSelectedMarkerId(null); // 清除選中的標記
+    setPopupMarker(null); // 關閉彈出窗口
     
     // 通知父組件地圖被點擊
     if (onMapClick) {
@@ -169,7 +172,7 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
             <div className="flex flex-col items-end space-y-2">
               <button
                 onClick={onShowReportModal}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors">
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors z-20 relative">
                 <Plus className="w-4 h-4 mr-2" />
                 Report Issue
               </button>
@@ -201,6 +204,9 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
                     event.stop();
                     console.log(`點擊了標記: ${marker.title}`, marker.reports);
                     
+                    // 顯示彈出窗口
+                    setPopupMarker(marker);
+                    
                     // 更新本地狀態
                     setClickedLocation(marker.position);
                     setSelectedMarkerId(marker.id);
@@ -231,6 +237,62 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
                 />
               )}
             </GoogleMap>
+
+            {/* 報告彈出窗口 */}
+            {popupMarker && (
+              <div className="absolute top-16 left-4 right-4 bg-white rounded-lg shadow-xl border max-h-80 overflow-y-auto z-10">
+                <div className="p-4 border-b bg-gray-50 rounded-t-lg">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{popupMarker.location}</h3>
+                      <p className="text-sm text-gray-600">{popupMarker.count} report{popupMarker.count > 1 ? 's' : ''}</p>
+                    </div>
+                    <button
+                      onClick={() => setPopupMarker(null)}
+                      className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+                    >
+                      <X className="w-4 h-4 text-gray-500" />
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="p-4 space-y-3">
+                  {popupMarker.reports.map((report, index) => (
+                    <div key={report.id} className="border-b border-gray-100 pb-3 last:border-b-0">
+                      <div className="flex items-start space-x-3">
+                        <span className="text-2xl flex-shrink-0">
+                          {reportTypes.find(t => t.id === report.type)?.icon || "⚠️"}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h4 className="font-medium text-gray-900 truncate">{report.title}</h4>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              report.severity === 'high' ? 'bg-red-100 text-red-800' :
+                              report.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-green-100 text-green-800'
+                            }`}>
+                              {report.severity.toUpperCase()}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">{report.description}</p>
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <div className="flex items-center space-x-3">
+                              <span>👍 {report.upvotes}</span>
+                              <span>👎 {report.downvotes}</span>
+                              <div className="flex items-center space-x-1">
+                                <MessageSquare className="w-3 h-3" />
+                                <span>{report.comments}</span>
+                              </div>
+                            </div>
+                            <span>{new Date(report.reportedAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* 點擊位置信息 */}
             {clickedLocation && (
