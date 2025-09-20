@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
-import { MapPin, AlertTriangle, Clock, Users, Plus, X, MessageSquare } from "lucide-react";
+import { MapPin, AlertTriangle, Clock, Users, Plus, X, MessageSquare, Crosshair } from "lucide-react";
 import { initialReports } from "../data/reports";
 import { reportTypes } from "../data/reportTypes";
 
@@ -8,19 +8,41 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
   const [clickedLocation, setClickedLocation] = useState(null);
   const [selectedMarkerId, setSelectedMarkerId] = useState(null);
   const [popupMarker, setPopupMarker] = useState(null);
+  
+  // GPS 定位相關狀態
+  const [userLocation, setUserLocation] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState(null);
+  const [hasAutoLocated, setHasAutoLocated] = useState(false);
+  
+  // 道路驗證相關狀態
+  const [isValidatingLocation, setIsValidatingLocation] = useState(false);
+  const [validationError, setValidationError] = useState(null);
+  
+  // 地圖引用
+  const mapRef = useRef(null);
+  const geocoderRef = useRef(null);
   // Google Maps API 配置
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
     googleMapsApiKey: "AIzaSyArfTXU_iFH_PvWzXXpqP9jvuQw84Co4e4",
+    language: "zh-TW",
+    region: "TW"
   });
 
-  // 地圖中心點（台北市）
+  // 地圖中心點（優先使用用戶位置，否則使用台北市）
   const center = useMemo(
-    () => ({
-      lat: 24.8004,
-      lng: 120.966,
-    }),
-    []
+    () => {
+      if (userLocation) {
+        return userLocation;
+      }
+      // 預設中心點（台北市）
+      return {
+        lat: 25.0330,
+        lng: 121.5654,
+      };
+    },
+    [userLocation]
   );
 
   // 地圖選項
@@ -78,7 +100,7 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
         reports: group.reports,
         location: group.location,
         severity: group.severity,
-        title: `${group.count} report${group.count > 1 ? "s" : ""} at ${group.location}`,
+          title: `${group.location} 有 ${group.count} 個回報`,
       }));
   }, [reports]);
 
@@ -110,33 +132,281 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
     };
   };
 
-  const onLoad = useCallback(() => {
-    // 地圖載入完成後的處理
+  const onLoad = useCallback((map) => {
+    mapRef.current = map;
   }, []);
 
-  // 處理地圖點擊事件
-  const handleMapClick = useCallback(
-    event => {
-      // 檢查是否點擊在標記上，如果是則不處理地圖點擊
-      if (event.placeId) {
-        return;
+   // 使用 Google Roads API 驗證點擊位置是否在道路上
+ const validateLocationOnRoad = useCallback(async (lat, lng) => {
+  try {
+    // 使用 Google Roads API 的 Snap to Roads 功能
+    const response = await fetch(
+      `https://roads.googleapis.com/v1/snapToRoads?path=${lat},${lng}&interpolate=true&key=AIzaSyArfTXU_iFH_PvWzXXpqP9jvuQw84Co4e4`
+    );
+   
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+   
+    const data = await response.json();
+   
+    // 如果 Roads API 返回了 snappedPoints，表示位置在道路上
+    if (data.snappedPoints && data.snappedPoints.length > 0) {
+      const snappedPoint = data.snappedPoints[0];
+      const originalLocation = snappedPoint.originalIndex !== undefined ?
+        snappedPoint.originalIndex : 0;
+     
+      // 計算與原始位置的距離
+      const distance = calculateDistance(
+        lat, lng,
+        snappedPoint.location.latitude,
+        snappedPoint.location.longitude
+      );
+     
+      // 如果距離在合理範圍內（50米），認為是有效道路
+      if (distance <= 50) {
+        // 獲取地址信息
+        if (!geocoderRef.current) {
+          geocoderRef.current = new window.google.maps.Geocoder();
+        }
+       
+        const geocodeResult = await geocoderRef.current.geocode({
+          location: { lat: snappedPoint.location.latitude, lng: snappedPoint.location.longitude }
+        });
+       
+        const address = geocodeResult.results && geocodeResult.results.length > 0
+          ? geocodeResult.results[0].formatted_address
+          : `${snappedPoint.location.latitude}, ${snappedPoint.location.longitude}`;
+       
+        return {
+          isValid: true,
+          address: address,
+          snappedLocation: {
+            lat: snappedPoint.location.latitude,
+            lng: snappedPoint.location.longitude
+          },
+          distance: distance
+        };
+      }
+    }
+   
+    return {
+      isValid: false,
+      reason: '不在道路範圍內',
+      address: `${lat}, ${lng}`
+    };
+   
+  } catch (error) {
+    console.error('Roads API 驗證錯誤:', error);
+   
+    // 如果 Roads API 失敗，回退到地理編碼驗證
+    return await fallbackGeocodeValidation(lat, lng);
+  }
+}, []);
+
+
+// 備用驗證方法（地理編碼）
+const fallbackGeocodeValidation = useCallback(async (lat, lng) => {
+  if (!geocoderRef.current) {
+    geocoderRef.current = new window.google.maps.Geocoder();
+  }
+
+
+  try {
+    const result = await geocoderRef.current.geocode({
+      location: { lat, lng }
+    });
+
+
+    if (result.results && result.results.length > 0) {
+      const types = result.results[0].types || [];
+     
+      // 檢查是否為明顯的建築物或設施
+      const buildingTypes = ['premise', 'subpremise', 'establishment'];
+      const isBuilding = types.some(type => buildingTypes.includes(type));
+     
+      // 如果不在建築物內，允許回報
+      if (!isBuilding) {
+        return {
+          isValid: true,
+          address: result.results[0].formatted_address
+        };
+      } else {
+        return {
+          isValid: false,
+          reason: '建築物區域',
+          address: result.results[0].formatted_address
+        };
+      }
+    }
+   
+    return { isValid: false, reason: '無法識別位置類型' };
+  } catch (error) {
+    console.error('備用驗證錯誤:', error);
+    return { isValid: false, reason: '驗證失敗' };
+  }
+}, []);
+
+
+// 計算兩點間距離（米）
+const calculateDistance = (lat1, lng1, lat2, lng2) => {
+  const R = 6371e3; // 地球半徑（米）
+  const φ1 = lat1 * Math.PI/180;
+  const φ2 = lat2 * Math.PI/180;
+  const Δφ = (lat2-lat1) * Math.PI/180;
+  const Δλ = (lng2-lng1) * Math.PI/180;
+
+
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+
+  return R * c; // 距離（米）
+};
+
+
+// GPS 定位功能（通用）
+const performLocation = useCallback((isAutoLocation = false) => {
+  if (!navigator.geolocation) {
+    if (!isAutoLocation) {
+      setLocationError("此瀏覽器未支援定位功能。請使用現代瀏覽器（如 Chrome、Firefox、Safari）。");
+    }
+    return;
+  }
+
+
+  setIsLocating(true);
+  if (!isAutoLocation) {
+    setLocationError(null);
+  }
+
+
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords;
+      const loc = { lat: latitude, lng: longitude };
+     
+      setUserLocation(loc);
+      setClickedLocation(loc);
+      setSelectedMarkerId(null);
+      setPopupMarker(null);
+      setIsLocating(false);
+      setLocationError(null);
+
+
+      // 如果是手動定位，才移動地圖（自動定位時地圖已經以用戶位置為中心）
+      if (!isAutoLocation && mapRef.current) {
+        mapRef.current.panTo(loc);
+        mapRef.current.setZoom(17);
       }
 
-      const lat = event.latLng.lat();
-      const lng = event.latLng.lng();
-      const coordinates = { lat, lng };
 
-      setClickedLocation(coordinates);
-      setSelectedMarkerId(null); // 清除選中的標記
-      setPopupMarker(null); // 關閉彈出窗口
+      // 通知父組件
+      if (onMapClick) {
+        onMapClick(loc);
+      }
+    },
+    (error) => {
+      console.error("定位錯誤:", error);
+      setIsLocating(false);
+     
+      // 自動定位失敗時不顯示錯誤訊息，手動定位時才顯示
+      if (!isAutoLocation) {
+        let errorMessage = "定位失敗。";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "定位權限被拒絕。請在瀏覽器設定中允許此網站存取您的位置。";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = "無法取得位置資訊。請確認：1) GPS 功能已開啟 2) 您在室外環境 3) 網路連線正常";
+            break;
+          case error.TIMEOUT:
+            errorMessage = "定位超時。請確認您在室外環境，並有良好的網路連線。";
+            break;
+          default:
+            errorMessage = "定位失敗，請稍後再試。";
+        }
+       
+        setLocationError(errorMessage);
+      } else {
+        // 自動定位失敗時，地圖會使用預設的台北市位置
+        console.log("自動定位失敗，使用預設位置");
+      }
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: isAutoLocation ? 10000 : 15000, // 自動定位超時時間較短
+      maximumAge: 300000 // 5分鐘快取
+    }
+  );
+}, [onMapClick]);
+
+
+// 手動定位按鈕觸發
+const handleLocateMe = useCallback(() => {
+  performLocation(false);
+}, [performLocation]);
+
+
+// 頁面載入時立即開始定位
+useEffect(() => {
+  // 組件載入時立即開始定位，不等待地圖載入
+  if (!hasAutoLocated) {
+    setHasAutoLocated(true);
+    performLocation(true);
+  }
+}, [hasAutoLocated, performLocation]);
+
+
+// 處理地圖點擊事件
+const handleMapClick = useCallback(
+  async event => {
+    // 檢查是否點擊在標記上，如果是則不處理地圖點擊
+    if (event.placeId) {
+      return;
+    }
+
+
+    const lat = event.latLng.lat();
+    const lng = event.latLng.lng();
+    const coordinates = { lat, lng };
+
+
+    // 清除之前的驗證錯誤
+    setValidationError(null);
+    setIsValidatingLocation(true);
+
+
+    // 使用 Roads API 驗證點擊位置是否在道路上
+    const validation = await validateLocationOnRoad(lat, lng);
+    setIsValidatingLocation(false);
+
+
+    if (validation.isValid) {
+      // 位置有效，設置點擊位置
+      const finalCoordinates = validation.snappedLocation || coordinates;
+      setClickedLocation(finalCoordinates);
+      setSelectedMarkerId(null);
+      setPopupMarker(null);
+
 
       // 通知父組件地圖被點擊
       if (onMapClick) {
-        onMapClick(coordinates);
+        onMapClick(finalCoordinates);
       }
-    },
-    [onMapClick]
-  );
+    } else {
+      // 位置無效，顯示錯誤訊息
+      setValidationError({
+        message: `無法在此位置回報：${validation.reason}`,
+        address: validation.address,
+        coordinates: coordinates
+      });
+    }
+  },
+  [onMapClick, validateLocationOnRoad]
+);
 
   if (!isLoaded) {
     return (
@@ -146,17 +416,25 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
             <div className="mb-4 flex justify-between items-center">
               <h3 className="text-lg font-semibold flex items-center">
                 <MapPin className="w-5 h-5 mr-2" />
-                Safety Map View
+                安全地圖檢視
               </h3>
               <button
                 onClick={onShowReportModal}
                 className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors">
                 <Plus className="w-4 h-4 mr-2" />
-                Report Issue
+                回報問題
               </button>
             </div>
             <div className="flex-1 bg-gray-200 rounded-lg flex items-center justify-center">
-              <div className="text-gray-500">載入地圖中...</div>
+              <div className="text-center">
+                <div className="text-gray-500 mb-2">載入地圖中...</div>
+                {isLocating && (
+                  <div className="flex items-center justify-center gap-2 text-blue-600">
+                    <Crosshair className="w-4 h-4 animate-spin" />
+                    <span className="text-sm">正在定位您的位置...</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -168,10 +446,93 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
     <div className="h-full relative">
       <button
         onClick={onShowReportModal}
-        className="absolute bottom-4 right-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors z-20">
+        className="absolute bottom-16 right-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors z-20">
         <Plus className="w-4 h-4 mr-2" />
-        Report Issue
+        回報問題
       </button>
+
+      {/* GPS 定位按鈕 */}
+      <button
+        onClick={handleLocateMe}
+        disabled={isLocating}
+        className={`absolute bottom-4 right-4 border border-gray-200 text-gray-800 px-3 py-2 rounded-lg shadow-md flex items-center gap-2 transition-colors z-20 ${
+          isLocating 
+            ? 'bg-gray-100 cursor-not-allowed' 
+            : 'bg-white hover:bg-gray-50'
+        }`}>
+        <Crosshair className={`w-4 h-4 ${isLocating ? 'animate-spin' : ''}`} />
+        {isLocating ? '定位中...' : '定位我'}
+      </button>
+
+      {/* 自動定位提示 */}
+      {isLocating && !hasAutoLocated && (
+        <div className="absolute top-2 left-2 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-md z-20">
+          <div className="flex items-center gap-2">
+            <Crosshair className="w-4 h-4 animate-spin" />
+            <span className="text-sm">正在定位您的位置...</span>
+          </div>
+        </div>
+      )}
+
+      {/* 位置驗證中提示 */}
+      {isValidatingLocation && (
+        <div className="absolute top-2 left-2 bg-yellow-500 text-white px-3 py-2 rounded-lg shadow-md z-20">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-sm">正在驗證道路位置...</span>
+          </div>
+        </div>
+      )}
+
+      {/* 位置驗證失敗提示 */}
+      {validationError && (
+        <div className="absolute top-2 left-2 bg-orange-500 text-white px-4 py-3 rounded-lg shadow-md max-w-sm z-20">
+          <div className="flex items-start gap-2">
+            <div className="flex-shrink-0">
+              <AlertTriangle className="w-4 h-4 mt-0.5" />
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-medium mb-1">位置無效</div>
+              <div className="text-xs leading-relaxed mb-2">{validationError.message}</div>
+              {validationError.address && (
+                <div className="text-xs opacity-90 mb-2">
+                  地址：{validationError.address}
+                </div>
+              )}
+              <div className="text-xs opacity-75">
+                請點擊道路區域進行回報
+              </div>
+            </div>
+            <button 
+              onClick={() => setValidationError(null)}
+              className="flex-shrink-0 text-white hover:text-gray-200"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 定位錯誤提示 */}
+      {locationError && (
+        <div className="absolute bottom-16 right-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg shadow-md max-w-sm z-20">
+          <div className="flex items-start gap-2">
+            <div className="flex-shrink-0">
+              <X className="w-4 h-4 mt-0.5" />
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-medium mb-1">定位失敗</div>
+              <div className="text-xs leading-relaxed">{locationError}</div>
+            </div>
+            <button 
+              onClick={() => setLocationError(null)}
+              className="flex-shrink-0 text-red-600 hover:text-red-800"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Google Maps */}
       <div className="flex-1 rounded-lg relative h-full" style={{ zIndex: 0 }}>
@@ -213,7 +574,7 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
           {clickedLocation && (
             <Marker
               position={clickedLocation}
-              title="Selected Location"
+              title="所選位置"
               icon={{
                 url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
                       <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
@@ -221,6 +582,41 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
                         <circle cx="15" cy="15" r="6" fill="#ffffff"/>
                       </svg>
                     `)}`,
+                scaledSize: new window.google.maps.Size(30, 30),
+                anchor: new window.google.maps.Point(15, 15),
+              }}
+            />
+          )}
+
+          {/* 用戶位置標記 */}
+          {userLocation && (
+            <Marker
+              position={userLocation}
+              title="我的位置"
+              icon={{
+                url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+                  <svg width="22" height="22" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="11" cy="11" r="8" fill="#2563eb" stroke="#ffffff" stroke-width="3"/>
+                  </svg>
+                `)}`,
+                scaledSize: new window.google.maps.Size(22, 22),
+                anchor: new window.google.maps.Point(11, 11),
+              }}
+            />
+          )}
+
+          {/* 無效位置標記 */}
+          {validationError && (
+            <Marker
+              position={validationError.coordinates}
+              title="無效位置"
+              icon={{
+                url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+                  <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="15" cy="15" r="12" fill="#ef4444" stroke="#ffffff" stroke-width="3"/>
+                    <path d="M10 10 L20 20 M20 10 L10 20" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                `)}`,
                 scaledSize: new window.google.maps.Size(30, 30),
                 anchor: new window.google.maps.Point(15, 15),
               }}
@@ -236,7 +632,7 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
                 <div>
                   <h3 className="font-semibold text-gray-900">{popupMarker.location}</h3>
                   <p className="text-sm text-gray-600">
-                    {popupMarker.count} report{popupMarker.count > 1 ? "s" : ""}
+                    {popupMarker.count} 回報
                   </p>
                 </div>
                 <button onClick={() => setPopupMarker(null)} className="p-1 hover:bg-gray-200 rounded-full transition-colors">
@@ -260,8 +656,9 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
                               : report.severity === "medium"
                               ? "bg-yellow-100 text-yellow-800"
                               : "bg-green-100 text-green-800"
-                          }`}>
-                          {report.severity.toUpperCase()}
+                          }`}                        >
+                          {report.severity === "high" ? "高度危險" : 
+                           report.severity === "medium" ? "中度危險" : "低度危險"}
                         </span>
                       </div>
                       <p className="text-sm text-gray-600 mb-2 line-clamp-2">{report.description}</p>
@@ -287,7 +684,7 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
         {/* 點擊位置信息 */}
         {clickedLocation && (
           <div className="absolute top-16 left-2 bg-blue-500 text-white rounded-lg shadow-lg p-3 pointer-events-none">
-            <div className="text-xs font-semibold mb-1">{selectedMarkerId ? "📍 Marker Selected" : "📍 Location Selected"}</div>
+            <div className="text-xs font-semibold mb-1">{selectedMarkerId ? "📍 已選擇標記" : "📍 已選擇位置"}</div>
             <div className="text-xs">
               <div>Lat: {clickedLocation.lat.toFixed(6)}</div>
               <div>Lng: {clickedLocation.lng.toFixed(6)}</div>
@@ -297,25 +694,25 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
 
         {/* 報告數量圖例 */}
         <div className="absolute top-2 right-2 bg-white rounded-lg shadow-lg p-3 pointer-events-none">
-          <div className="text-xs text-gray-600 mb-2 font-semibold">Reports Count</div>
+          <div className="text-xs text-gray-600 mb-2 font-semibold">回報數量</div>
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-xs font-bold">5+</span>
               </div>
-              <span className="text-xs">5+ Reports</span>
+              <span className="text-xs">5+ 個回報</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-xs font-bold">3</span>
               </div>
-              <span className="text-xs">3-4 Reports</span>
+              <span className="text-xs">3-4 個回報</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
                 <span className="text-white text-xs font-bold">1</span>
               </div>
-              <span className="text-xs">1-2 Reports</span>
+              <span className="text-xs">1-2 個回報</span>
             </div>
           </div>
         </div>
