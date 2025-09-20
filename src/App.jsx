@@ -16,6 +16,7 @@ const App = () => {
   const [_selectedReport, setSelectedReport] = useState(null);
   const [reports, setReports] = useState(initialReports);
   const [expandedGroups, setExpandedGroups] = useState(new Set());
+  const [selectedCoordinates, setSelectedCoordinates] = useState(null);
 
   const [newReport, setNewReport] = useState({
     type: "",
@@ -76,6 +77,53 @@ const App = () => {
     setExpandedGroups(newExpanded);
   };
 
+  // 處理地圖點擊事件
+  const handleMapClick = (coordinates) => {
+    setSelectedCoordinates(coordinates);
+  };
+
+  // 處理標記點擊事件 - 選擇該位置進行報告
+  const handleMarkerClick = (coordinates) => {
+    setSelectedCoordinates(coordinates);
+  };
+
+  // 處理報告提交
+  const handleSubmitReport = () => {
+    if (!newReport.type || !newReport.title || !newReport.description) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    if (!selectedCoordinates) {
+      alert("Please select a location on the map first");
+      return;
+    }
+
+    const report = {
+      id: reports.length + 1,
+      ...newReport,
+      coordinates: selectedCoordinates,
+      location: newReport.location || `Location ${selectedCoordinates.lat.toFixed(4)}, ${selectedCoordinates.lng.toFixed(4)}`,
+      status: "pending",
+      reportedBy: "current_user",
+      reportedAt: new Date(),
+      upvotes: 0,
+      downvotes: 0,
+      comments: 0,
+    };
+
+    setReports([...reports, report]);
+    setNewReport({
+      type: "",
+      title: "",
+      description: "",
+      location: "",
+      severity: "medium",
+    });
+    // Keep selectedCoordinates so user can add more reports at the same location
+    setShowReportModal(false);
+  };
+
   const getSeverityColor = severity => {
     switch (severity) {
       case "high":
@@ -117,26 +165,6 @@ const App = () => {
     }
   };
 
-  const handleSubmitReport = () => {
-    if (!newReport.type || !newReport.title || !newReport.description) return;
-
-    const report = {
-      id: reports.length + 1,
-      ...newReport,
-      location: newReport.location || "Current Location",
-      coordinates: { lat: 25.033 + Math.random() * 0.01, lng: 121.5654 + Math.random() * 0.01 },
-      status: "pending",
-      reportedBy: "current_user",
-      reportedAt: new Date(),
-      upvotes: 0,
-      downvotes: 0,
-      comments: 0,
-    };
-
-    setReports([report, ...reports]);
-    setNewReport({ type: "", title: "", description: "", location: "", severity: "medium" });
-    setShowReportModal(false);
-  };
 
   const handleVote = (reportId, voteType) => {
     setReports(
@@ -199,13 +227,37 @@ const App = () => {
 
             <div>
               <label className="block text-sm font-medium mb-2">Location</label>
-              <input
-                type="text"
-                value={newReport.location}
-                onChange={e => setNewReport({ ...newReport, location: e.target.value })}
-                className="w-full p-3 border rounded-lg"
-                placeholder="Address or intersection (or use current location)"
-              />
+              {selectedCoordinates ? (
+                <div className="space-y-2">
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="text-sm text-green-800 font-medium">📍 Location Selected</div>
+                        <div className="text-xs text-green-600 mt-1">
+                          Lat: {selectedCoordinates.lat.toFixed(6)}, Lng: {selectedCoordinates.lng.toFixed(6)}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setSelectedCoordinates(null)}
+                        className="text-xs text-red-600 hover:text-red-700 underline"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    value={newReport.location}
+                    onChange={e => setNewReport({ ...newReport, location: e.target.value })}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="Optional: Add address or intersection name"
+                  />
+                </div>
+              ) : (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="text-sm text-yellow-800">⚠️ Please click on the map or existing markers to select a location first</div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -272,7 +324,7 @@ const App = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">
-        {activeTab === "map" && <MapView onShowReportModal={() => setShowReportModal(true)} />}
+        {activeTab === "map" && <MapView reports={reports} onShowReportModal={() => setShowReportModal(true)} onMapClick={handleMapClick} onMarkerClick={handleMarkerClick} />}
         {activeTab === "reports" && (
           <ReportsView
             groupedReports={groupedReports}
