@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { MapPin, AlertTriangle, Clock, Users, Star, Plus, Search, Filter, Navigation, Shield, Eye, MessageSquare, User } from "lucide-react";
 import Header from "./components/Header";
 import StatsFooter from "./components/StatsFooter";
+import StatsDashboard from "./components/StatsDashboard";
 import MapView from "./components/MapView";
 import ReportsView from "./components/ReportsView";
 import DangerLevelsView from "./components/DangerLevelsView";
@@ -325,33 +326,34 @@ const App = () => {
         </button>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        {activeTab === "map" && (
-          <MapView
-            reports={reports}
-            onShowReportModal={() => setShowReportModal(true)}
-            onMapClick={handleMapClick}
-            onMarkerClick={handleMarkerClick}
-          />
-        )}
-        {activeTab === "reports" && (
-          <ReportsView
-            groupedReports={groupedReports}
-            expandedGroups={expandedGroups}
-            onToggleGroup={toggleGroupExpansion}
-            onVote={handleVote}
-            onSelectReport={setSelectedReport}
-            getSeverityColor={getSeverityColor}
-            getStatusColor={getStatusColor}
-          />
-        )}
-        {activeTab === "danger" && (
-          <DangerLevelsView roadDangerData={roadDangerData} getSeverityColor={getSeverityColor} getRoadDangerColor={getRoadDangerColor} />
-        )}
-        {activeTab === "community" && <CommunityView />}
-        {activeTab === "profile" && <ProfileView />}
-      </div>
+        {/* Main Content */}
+        <div className="flex-1 overflow-hidden">
+          {activeTab === "map" && (
+            <MapView
+              reports={reports}
+              onShowReportModal={() => setShowReportModal(true)}
+              onMapClick={handleMapClick}
+              onMarkerClick={handleMarkerClick}
+            />
+          )}
+          {activeTab === "reports" && (
+            <ReportsView
+              reports={reports}
+              groupedReports={groupedReports}
+              expandedGroups={expandedGroups}
+              onToggleGroup={toggleGroupExpansion}
+              onVote={handleVote}
+              onSelectReport={setSelectedReport}
+              getSeverityColor={getSeverityColor}
+              getStatusColor={getStatusColor}
+            />
+          )}
+          {activeTab === "danger" && (
+            <DangerLevelsView roadDangerData={roadDangerData} getSeverityColor={getSeverityColor} getRoadDangerColor={getRoadDangerColor} />
+          )}
+          {activeTab === "community" && <CommunityView />}
+          {activeTab === "profile" && <ProfileView />}
+        </div>
 
       {/* Report Modal */}
       <ReportModal />
