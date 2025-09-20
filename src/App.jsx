@@ -65,7 +65,7 @@ const App = () => {
         reports: group.reports,
         location: group.location,
         severity: group.severity,
-        title: `${group.count} report${group.count > 1 ? "s" : ""} at ${group.location}`,
+        title: `${group.location} 有 ${group.count} 個回報`,
       }));
   }, [reports]);
 
@@ -90,14 +90,14 @@ const App = () => {
   };
 
   // 處理報告提交
-  const handleSubmitReport = () => {
+  const handleSubmitReport = React.useCallback(() => {
     if (!newReport.type || !newReport.title || !newReport.description) {
-      alert("Please fill in all required fields");
+      alert("請填寫所有必填欄位");
       return;
     }
 
     if (!selectedCoordinates) {
-      alert("Please select a location on the map first");
+      alert("請先在地圖上選擇位置");
       return;
     }
 
@@ -105,7 +105,7 @@ const App = () => {
       id: reports.length + 1,
       ...newReport,
       coordinates: selectedCoordinates,
-      location: newReport.location || `Location ${selectedCoordinates.lat.toFixed(4)}, ${selectedCoordinates.lng.toFixed(4)}`,
+      location: newReport.location || `位置 ${selectedCoordinates.lat.toFixed(4)}, ${selectedCoordinates.lng.toFixed(4)}`,
       status: "pending",
       reportedBy: "current_user",
       reportedAt: new Date(),
@@ -124,7 +124,7 @@ const App = () => {
     });
     // Keep selectedCoordinates so user can add more reports at the same location
     setShowReportModal(false);
-  };
+  }, [newReport, selectedCoordinates, reports]);
 
   const getSeverityColor = severity => {
     switch (severity) {
@@ -181,22 +181,24 @@ const App = () => {
     );
   };
 
-  const ReportModal = () =>
-    showReportModal && (
+  const ReportModal = React.useCallback(() => {
+    if (!showReportModal) return null;
+
+    return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
           <div className="p-4 border-b">
-            <h3 className="text-lg font-semibold">Report Safety Issue</h3>
+            <h3 className="text-lg font-semibold">回報安全問題</h3>
           </div>
 
           <div className="p-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Issue Type</label>
+              <label className="block text-sm font-medium mb-2">問題類型</label>
               <select
                 value={newReport.type}
-                onChange={e => setNewReport({ ...newReport, type: e.target.value })}
+                onChange={e => setNewReport(prev => ({ ...prev, type: e.target.value }))}
                 className="w-full p-3 border rounded-lg">
-                <option value="">Select issue type...</option>
+                <option value="">選擇問題類型...</option>
                 {reportTypes.map(type => (
                   <option key={type.id} value={type.id}>
                     {type.icon} {type.label}
@@ -206,67 +208,67 @@ const App = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Title</label>
+              <label className="block text-sm font-medium mb-2">標題</label>
               <input
                 type="text"
                 value={newReport.title}
-                onChange={e => setNewReport({ ...newReport, title: e.target.value })}
+                onChange={e => setNewReport(prev => ({ ...prev, title: e.target.value }))}
                 className="w-full p-3 border rounded-lg"
-                placeholder="Brief description of the issue"
+                placeholder="問題的簡要描述"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Detailed Description</label>
+              <label className="block text-sm font-medium mb-2">詳細描述</label>
               <textarea
                 value={newReport.description}
-                onChange={e => setNewReport({ ...newReport, description: e.target.value })}
+                onChange={e => setNewReport(prev => ({ ...prev, description: e.target.value }))}
                 className="w-full p-3 border rounded-lg h-24 resize-none"
-                placeholder="Provide more details about the safety issue..."
+                placeholder="提供更多關於安全問題的詳細資訊..."
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Location</label>
+              <label className="block text-sm font-medium mb-2">位置</label>
               {selectedCoordinates ? (
                 <div className="space-y-2">
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="text-sm text-green-800 font-medium">📍 Location Selected</div>
+                        <div className="text-sm text-green-800 font-medium">📍 已選擇位置</div>
                         <div className="text-xs text-green-600 mt-1">
                           Lat: {selectedCoordinates.lat.toFixed(6)}, Lng: {selectedCoordinates.lng.toFixed(6)}
                         </div>
                       </div>
                       <button onClick={() => setSelectedCoordinates(null)} className="text-xs text-red-600 hover:text-red-700 underline">
-                        Clear
+                        清除
                       </button>
                     </div>
                   </div>
                   <input
                     type="text"
                     value={newReport.location}
-                    onChange={e => setNewReport({ ...newReport, location: e.target.value })}
+                    onChange={e => setNewReport(prev => ({ ...prev, location: e.target.value }))}
                     className="w-full p-3 border rounded-lg"
-                    placeholder="Optional: Add address or intersection name"
+                    placeholder="選填：新增地址或路口名稱"
                   />
                 </div>
               ) : (
                 <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="text-sm text-yellow-800">⚠️ Please click on the map or existing markers to select a location first</div>
+                  <div className="text-sm text-yellow-800">⚠️ 請先點擊地圖或現有標記來選擇位置</div>
                 </div>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Severity Level</label>
+              <label className="block text-sm font-medium mb-2">嚴重程度</label>
               <select
                 value={newReport.severity}
-                onChange={e => setNewReport({ ...newReport, severity: e.target.value })}
+                onChange={e => setNewReport(prev => ({ ...prev, severity: e.target.value }))}
                 className="w-full p-3 border rounded-lg">
-                <option value="low">Low - Minor inconvenience</option>
-                <option value="medium">Medium - Moderate safety concern</option>
-                <option value="high">High - Immediate danger</option>
+                <option value="low">低 - 輕微不便</option>
+                <option value="medium">中 - 中等安全疑慮</option>
+                <option value="high">高 - 立即危險</option>
               </select>
             </div>
           </div>
@@ -275,15 +277,16 @@ const App = () => {
             <button
               onClick={() => setShowReportModal(false)}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              Cancel
+              取消
             </button>
             <button onClick={handleSubmitReport} className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors">
-              Submit Report
+              提交回報
             </button>
           </div>
         </div>
       </div>
     );
+  }, [showReportModal, newReport, selectedCoordinates, handleSubmitReport]);
 
   return (
     <div className="mx-auto h-screen bg-gray-50 flex flex-col lg:flex-row">
@@ -334,7 +337,7 @@ const App = () => {
               activeTab === "map" ? "border-red-500 text-red-600" : "border-transparent text-gray-600 hover:text-gray-900"
             }`}>
             <MapPin className="w-4 h-4 inline mr-2" />
-            Safety Map
+            安全地圖
           </button>
           <button
             onClick={() => setActiveTab("community")}

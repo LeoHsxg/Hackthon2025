@@ -10,12 +10,12 @@ const Header = () => {
             <Shield className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Road Safety Reporter</h1>
-            <p className="text-sm text-gray-600">Community-driven road safety monitoring</p>
+            <h1 className="text-xl font-bold text-gray-900">道路安全回報系統</h1>
+            <p className="text-sm text-gray-600">社群共享道路安全監控</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-600">📍 Hsinchu, Taiwan</span>
+          <span className="text-sm text-gray-600">📍 台灣新竹</span>
         </div>
       </div>
     </div>

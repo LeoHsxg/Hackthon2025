@@ -1,10 +1,10 @@
 export const initialReports = [
-  // Location 1: 5 reports (RED marker) - High traffic intersection
+  // 位置 1: 5 個回報 (紅色標記) - 高流量路口
   {
     id: 1,
     type: "traffic_light",
-    title: "Traffic Light Malfunction",
-    description: "Traffic light stuck on red for over 10 minutes",
+    title: "交通號誌故障",
+    description: "交通號誌卡在紅燈超過 10 分鐘",
     location: "西大路 & 林森路口",
     coordinates: { lat: 24.800574, lng: 120.9667005 },
     severity: "high",
@@ -18,8 +18,8 @@ export const initialReports = [
   {
     id: 2,
     type: "vendor",
-    title: "Illegal Street Vendors",
-    description: "Multiple vendors blocking entire sidewalk and part of road",
+    title: "非法攤販",
+    description: "多個攤販阻擋整個人行道和部分道路",
     location: "西大路 & 林森路口",
     coordinates: { lat: 24.800574, lng: 120.9667005 },
     severity: "medium",
@@ -33,8 +33,8 @@ export const initialReports = [
   {
     id: 3,
     type: "timing",
-    title: "Short Crossing Time",
-    description: "Pedestrian crossing time too short for elderly and disabled",
+    title: "行人通行時間過短",
+    description: "行人通行時間對長者和身障者來說太短",
     location: "西大路 & 林森路口",
     coordinates: { lat: 24.800574, lng: 120.9667005 },
     severity: "medium",
@@ -48,8 +48,8 @@ export const initialReports = [
   {
     id: 4,
     type: "pothole",
-    title: "Large Pothole",
-    description: "Deep pothole causing vehicle damage",
+    title: "大型坑洞",
+    description: "深坑洞造成車輛損壞",
     location: "西大路 & 林森路口",
     coordinates: { lat: 24.800574, lng: 120.9667005 },
     severity: "high",
@@ -63,8 +63,8 @@ export const initialReports = [
   {
     id: 5,
     type: "signage",
-    title: "Missing Stop Sign",
-    description: "Stop sign knocked down by vehicle",
+    title: "停車標誌遺失",
+    description: "停車標誌被車輛撞倒",
     location: "西大路 & 林森路口",
     coordinates: { lat: 24.800574, lng: 120.9667005 },
     severity: "high",
@@ -76,12 +76,12 @@ export const initialReports = [
     comments: 12,
   },
 
-  // Location 2: 3 reports (YELLOW marker) - School area
+  // 位置 2: 3 個回報 (黃色標記) - 學校區域
   {
     id: 6,
     type: "crossing",
-    title: "Unsafe School Crossing",
-    description: "No crossing guard during peak hours",
+    title: "不安全的學校路口",
+    description: "尖峰時段沒有交通指揮員",
     location: "西大路 & 文昌街口",
     coordinates: { lat: 24.801, lng: 120.9655 },
     severity: "medium",
@@ -95,8 +95,8 @@ export const initialReports = [
   {
     id: 7,
     type: "speed",
-    title: "Speeding Vehicles",
-    description: "Cars speeding through school zone",
+    title: "超速車輛",
+    description: "車輛在學校區域超速行駛",
     location: "西大路 & 文昌街口",
     coordinates: { lat: 24.801, lng: 120.9655 },
     severity: "medium",
@@ -110,8 +110,8 @@ export const initialReports = [
   {
     id: 8,
     type: "parking",
-    title: "Illegal Parking",
-    description: "Cars parked in no-parking zone near school",
+    title: "違規停車",
+    description: "車輛在學校附近禁止停車區域停車",
     location: "西大路 & 文昌街口",
     coordinates: { lat: 24.801, lng: 120.9655 },
     severity: "low",
@@ -123,12 +123,12 @@ export const initialReports = [
     comments: 2,
   },
 
-  // Location 3: 4 reports (YELLOW marker) - Market area
+  // 位置 3: 4 個回報 (黃色標記) - 市場區域
   {
     id: 9,
     type: "vendor",
-    title: "Blocking Sidewalk",
-    description: "Food vendors blocking pedestrian walkway",
+    title: "阻擋人行道",
+    description: "食物攤販阻擋行人通道",
     location: "西大路 & 西門路口",
     coordinates: { lat: 24.7995, lng: 120.9665 },
     severity: "medium",
@@ -142,8 +142,8 @@ export const initialReports = [
   {
     id: 10,
     type: "litter",
-    title: "Excessive Litter",
-    description: "Trash and food waste scattered around market",
+    title: "垃圾過多",
+    description: "垃圾和食物廢料散落在市場周圍",
     location: "西大路 & 西門路口",
     coordinates: { lat: 24.7995, lng: 120.9665 },
     severity: "low",
@@ -157,8 +157,8 @@ export const initialReports = [
   {
     id: 11,
     type: "noise",
-    title: "Excessive Noise",
-    description: "Loud music and shouting from vendors",
+    title: "噪音過大",
+    description: "攤販播放大聲音樂和叫喊",
     location: "西大路 & 西門路口",
     coordinates: { lat: 24.7995, lng: 120.9665 },
     severity: "low",
@@ -172,8 +172,8 @@ export const initialReports = [
   {
     id: 12,
     type: "traffic",
-    title: "Traffic Congestion",
-    description: "Heavy traffic due to market activities",
+    title: "交通壅塞",
+    description: "因市場活動造成交通壅塞",
     location: "西大路 & 西門路口",
     coordinates: { lat: 24.7995, lng: 120.9665 },
     severity: "medium",
@@ -185,12 +185,12 @@ export const initialReports = [
     comments: 4,
   },
 
-  // Location 4: 2 reports (GREEN marker) - Residential area
+  // 位置 4: 2 個回報 (綠色標記) - 住宅區域
   {
     id: 13,
     type: "streetlight",
-    title: "Broken Streetlight",
-    description: "Streetlight not working, area is very dark at night",
+    title: "路燈損壞",
+    description: "路燈不亮，夜間該區域非常黑暗",
     location: "西大路 & 建國路口",
     coordinates: { lat: 24.8, lng: 120.965 },
     severity: "medium",
@@ -204,8 +204,8 @@ export const initialReports = [
   {
     id: 14,
     type: "drainage",
-    title: "Blocked Drain",
-    description: "Storm drain clogged with debris",
+    title: "排水溝阻塞",
+    description: "雨水排水溝被垃圾阻塞",
     location: "西大路 & 建國路口",
     coordinates: { lat: 24.8, lng: 120.965 },
     severity: "low",
@@ -217,12 +217,12 @@ export const initialReports = [
     comments: 1,
   },
 
-  // Location 5: 1 report (GREEN marker) - Park area
+  // 位置 5: 1 個回報 (綠色標記) - 公園區域
   {
     id: 15,
     type: "pathway",
-    title: "Damaged Walkway",
-    description: "Cracked and uneven walking path in park",
+    title: "步道損壞",
+    description: "公園內步道有裂縫且不平整",
     location: "西大路 & 公園路口",
     coordinates: { lat: 24.8015, lng: 120.967 },
     severity: "low",
@@ -234,12 +234,12 @@ export const initialReports = [
     comments: 2,
   },
 
-  // Location 6: 6 reports (RED marker) - Busy commercial area
+  // 位置 6: 6 個回報 (紅色標記) - 繁忙商業區域
   {
     id: 16,
     type: "traffic_light",
-    title: "Malfunctioning Traffic Light",
-    description: "Traffic light showing all red lights",
+    title: "交通號誌故障",
+    description: "交通號誌顯示全部紅燈",
     location: "西大路 & 商業街口",
     coordinates: { lat: 24.799, lng: 120.9675 },
     severity: "high",
@@ -253,8 +253,8 @@ export const initialReports = [
   {
     id: 17,
     type: "accident",
-    title: "Frequent Accidents",
-    description: "Multiple minor accidents at this intersection",
+    title: "頻繁事故",
+    description: "此路口發生多起輕微事故",
     location: "西大路 & 商業街口",
     coordinates: { lat: 24.799, lng: 120.9675 },
     severity: "high",
@@ -268,8 +268,8 @@ export const initialReports = [
   {
     id: 18,
     type: "signage",
-    title: "Confusing Road Signs",
-    description: "Multiple conflicting directional signs",
+    title: "混亂的道路標誌",
+    description: "多個相互衝突的方向標誌",
     location: "西大路 & 商業街口",
     coordinates: { lat: 24.799, lng: 120.9675 },
     severity: "medium",
@@ -283,8 +283,8 @@ export const initialReports = [
   {
     id: 19,
     type: "construction",
-    title: "Unsafe Construction Zone",
-    description: "Construction barriers blocking visibility",
+    title: "不安全的施工區域",
+    description: "施工圍籬阻擋視線",
     location: "西大路 & 商業街口",
     coordinates: { lat: 24.799, lng: 120.9675 },
     severity: "high",
@@ -298,8 +298,8 @@ export const initialReports = [
   {
     id: 20,
     type: "pedestrian",
-    title: "Dangerous Pedestrian Crossing",
-    description: "No pedestrian signals, difficult to cross safely",
+    title: "危險的行人穿越道",
+    description: "沒有行人號誌，難以安全穿越",
     location: "西大路 & 商業街口",
     coordinates: { lat: 24.799, lng: 120.9675 },
     severity: "medium",
@@ -313,8 +313,8 @@ export const initialReports = [
   {
     id: 21,
     type: "emergency",
-    title: "Emergency Vehicle Access",
-    description: "Narrow lanes preventing emergency vehicle access",
+    title: "緊急車輛通行",
+    description: "車道過窄阻擋緊急車輛通行",
     location: "西大路 & 商業街口",
     coordinates: { lat: 24.799, lng: 120.9675 },
     severity: "high",
