@@ -80,6 +80,27 @@ const ReportsView = ({ reports, groupedReports, expandedGroups, onToggleGroup, o
 
                       <p className="text-gray-600 text-sm mb-2">{report.description}</p>
 
+                      {/* Photos */}
+                      {report.photos && report.photos.length > 0 && (
+                        <div className="mb-3">
+                          <div className="grid grid-cols-3 gap-2">
+                            {report.photos.map((photo, photoIndex) => (
+                              <div key={photo.id} className="relative">
+                                <img
+                                  src={photo.url}
+                                  alt={`Report photo ${photoIndex + 1}`}
+                                  className="w-full h-20 object-cover rounded-lg border cursor-pointer hover:opacity-80 transition-opacity"
+                                  onClick={() => {
+                                    // Open photo in full size (you could implement a modal here)
+                                    window.open(photo.url, '_blank');
+                                  }}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       <div className="flex items-center text-xs text-gray-500 mb-3">
                         <MapPin className="w-3 h-3 mr-1" />
                         {report.reportedAt.toLocaleDateString()} • by {report.reportedBy}

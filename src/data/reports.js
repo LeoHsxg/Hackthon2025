@@ -14,6 +14,13 @@ export const initialReports = [
     upvotes: 12,
     downvotes: 1,
     comments: 3,
+    photos: [
+      {
+        id: 1,
+        url: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop",
+        filename: "traffic_light_broken.jpg"
+      }
+    ],
   },
   {
     id: 2,
@@ -29,6 +36,13 @@ export const initialReports = [
     upvotes: 8,
     downvotes: 0,
     comments: 5,
+    photos: [
+      {
+        id: 2,
+        url: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop",
+        filename: "illegal_vendors.jpg"
+      }
+    ],
   },
   {
     id: 3,
@@ -59,6 +73,13 @@ export const initialReports = [
     upvotes: 20,
     downvotes: 1,
     comments: 8,
+    photos: [
+      {
+        id: 3,
+        url: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
+        filename: "pothole_damage.jpg"
+      }
+    ],
   },
   {
     id: 5,
@@ -91,6 +112,18 @@ export const initialReports = [
     upvotes: 18,
     downvotes: 2,
     comments: 6,
+    photos: [
+      {
+        id: 4,
+        url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop",
+        filename: "school_crossing.jpg"
+      },
+      {
+        id: 5,
+        url: "https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=400&h=300&fit=crop",
+        filename: "school_zone.jpg"
+      }
+    ],
   },
   {
     id: 7,
