@@ -1,6 +1,46 @@
 import React, { useCallback, useMemo, useState, useRef, useEffect } from "react";
 import { GoogleMap, useJsApiLoader, Marker } from "@react-google-maps/api";
 import { MapPin, AlertTriangle, Clock, Users, Plus, X, MessageSquare, Crosshair } from "lucide-react";
+
+// 自定義圖標組件 - 可以切換使用 PNG 圖片或 CSS 繪製的圖案
+const CustomIcon = ({ className = "w-4 h-4", isSpinning = false, useCustomImage = false }) => {
+  if (useCustomImage) {
+    // 使用自定義 PNG 圖片
+    return (
+      <img 
+        src="/your-custom-icon.png" // 將您的 PNG 圖片放在 public 資料夾中
+        alt="Custom Icon"
+        className={`${className} ${isSpinning ? 'animate-spin' : ''}`}
+        style={{ objectFit: 'contain' }}
+      />
+    );
+  }
+  
+  // 使用 CSS 繪製的貢丸圖案（備用方案）
+  return (
+    <div className={`relative ${className}`}>
+      <div className={`w-full h-full rounded-full bg-gradient-to-br from-amber-500 to-amber-700 border-2 border-amber-800 shadow-sm ${isSpinning ? 'animate-spin' : ''}`}>
+        {/* 貢丸的紋理線條 */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-2/3 h-0.5 bg-amber-800 rounded-full opacity-70"></div>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center rotate-90">
+          <div className="w-2/3 h-0.5 bg-amber-800 rounded-full opacity-70"></div>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center rotate-45">
+          <div className="w-1/2 h-0.5 bg-amber-800 rounded-full opacity-50"></div>
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center -rotate-45">
+          <div className="w-1/2 h-0.5 bg-amber-800 rounded-full opacity-50"></div>
+        </div>
+        {/* 貢丸中心的小點 */}
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1 h-1 bg-amber-900 rounded-full"></div>
+        {/* 高光效果 */}
+        <div className="absolute top-1 left-1 w-1 h-1 bg-amber-300 rounded-full opacity-80"></div>
+      </div>
+    </div>
+  );
+};
 import { initialReports } from "../data/reports";
 import { reportTypes } from "../data/reportTypes";
 
@@ -430,7 +470,7 @@ const handleMapClick = useCallback(
                 <div className="text-gray-500 mb-2">載入地圖中...</div>
                 {isLocating && (
                   <div className="flex items-center justify-center gap-2 text-blue-600">
-                    <Crosshair className="w-4 h-4 animate-spin" />
+                    <CustomIcon className="w-4 h-4" isSpinning={true} useCustomImage={true} />
                     <span className="text-sm">正在定位您的位置...</span>
                   </div>
                 )}
@@ -460,7 +500,7 @@ const handleMapClick = useCallback(
             ? 'bg-gray-100 cursor-not-allowed' 
             : 'bg-white hover:bg-gray-50'
         }`}>
-        <Crosshair className={`w-4 h-4 ${isLocating ? 'animate-spin' : ''}`} />
+        <CustomIcon className="w-4 h-4" isSpinning={isLocating} useCustomImage={true} />
         {isLocating ? '定位中...' : '定位我'}
       </button>
 
@@ -468,7 +508,7 @@ const handleMapClick = useCallback(
       {isLocating && !hasAutoLocated && (
         <div className="absolute top-2 left-2 bg-blue-500 text-white px-3 py-2 rounded-lg shadow-md z-20">
           <div className="flex items-center gap-2">
-            <Crosshair className="w-4 h-4 animate-spin" />
+            <CustomIcon className="w-4 h-4" isSpinning={true} useCustomImage={true} />
             <span className="text-sm">正在定位您的位置...</span>
           </div>
         </div>
@@ -588,19 +628,23 @@ const handleMapClick = useCallback(
             />
           )}
 
-          {/* 用戶位置標記 */}
+          {/* 用戶位置標記 - 自定義 PNG 圖片 */}
           {userLocation && (
             <Marker
               position={userLocation}
               title="我的位置"
               icon={{
-                url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-                  <svg width="22" height="22" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="11" cy="11" r="8" fill="#2563eb" stroke="#ffffff" stroke-width="3"/>
-                  </svg>
-                `)}`,
-                scaledSize: new window.google.maps.Size(22, 22),
-                anchor: new window.google.maps.Point(11, 11),
+                // 方法 1: 使用 public 資料夾中的圖片
+                url: "/your-custom-icon.png", // 將 your-custom-icon.png 放在 public 資料夾中
+                
+                // 方法 2: 使用 base64 編碼的圖片（如果您想直接嵌入）
+                // url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...", // 您的 base64 編碼
+                
+                // 方法 3: 使用外部 URL
+                // url: "https://example.com/your-icon.png",
+                
+                scaledSize: new window.google.maps.Size(32, 32), // 調整圖片大小
+                anchor: new window.google.maps.Point(16, 16), // 調整錨點位置
               }}
             />
           )}

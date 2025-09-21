@@ -318,7 +318,7 @@ export const initialReports = [
     coordinates: { lat: 24.8015, lng: 120.967 },
     severity: "low",
     status: "resolved",
-    reportedBy: "user_006",
+    reportedBy: "user_001",
     reportedAt: new Date("2024-09-19"),
     upvotes: 8,
     downvotes: 0,
