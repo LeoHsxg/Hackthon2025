@@ -30,16 +30,16 @@ const MapView = ({ onShowReportModal, onMapClick, onMarkerClick, reports = initi
     region: "TW"
   });
 
-  // 地圖中心點（優先使用用戶位置，否則使用台北市）
+  // 地圖中心點（優先使用用戶位置，否則使用新竹市）
   const center = useMemo(
     () => {
       if (userLocation) {
         return userLocation;
       }
-      // 預設中心點（台北市）
+      // 預設中心點（新竹市）
       return {
-        lat: 25.0330,
-        lng: 121.5654,
+        lat: 24.8066,
+        lng: 120.9686,
       };
     },
     [userLocation]
