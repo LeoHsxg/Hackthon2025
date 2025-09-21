@@ -662,6 +662,24 @@ const handleMapClick = useCallback(
                         </span>
                       </div>
                       <p className="text-sm text-gray-600 mb-2 line-clamp-2">{report.description}</p>
+                      
+                      {/* Photos in popup */}
+                      {report.photos && report.photos.length > 0 && (
+                        <div className="mb-2">
+                          <div className="flex space-x-1 overflow-x-auto">
+                            {report.photos.map((photo, photoIndex) => (
+                              <img
+                                key={photo.id}
+                                src={photo.url}
+                                alt={`Report photo ${photoIndex + 1}`}
+                                className="w-16 h-16 object-cover rounded border flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => window.open(photo.url, '_blank')}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
                       <div className="flex items-center justify-between text-xs text-gray-500">
                         <div className="flex items-center space-x-3">
                           <span>👍 {report.upvotes}</span>

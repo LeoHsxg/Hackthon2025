@@ -28,7 +28,30 @@ const App = () => {
     description: "",
     location: "",
     severity: "medium",
+    photos: [],
   });
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+
+  // Memoized input handlers to prevent re-renders
+  const handleTitleChange = React.useCallback((e) => {
+    setNewReport(prev => ({ ...prev, title: e.target.value }));
+  }, []);
+
+  const handleDescriptionChange = React.useCallback((e) => {
+    setNewReport(prev => ({ ...prev, description: e.target.value }));
+  }, []);
+
+  const handleLocationChange = React.useCallback((e) => {
+    setNewReport(prev => ({ ...prev, location: e.target.value }));
+  }, []);
+
+  const handleTypeChange = React.useCallback((e) => {
+    setNewReport(prev => ({ ...prev, type: e.target.value }));
+  }, []);
+
+  const handleSeverityChange = React.useCallback((e) => {
+    setNewReport(prev => ({ ...prev, severity: e.target.value }));
+  }, []);
 
   const [roadDangerData] = useState(roadDangerLevels);
 
@@ -114,15 +137,22 @@ const App = () => {
       upvotes: 0,
       downvotes: 0,
       comments: 0,
+      photos: newReport.photos.map(photo => ({
+        id: photo.id,
+        url: photo.base64, // Using base64 data URL
+        filename: photo.file.name
+      }))
     };
 
     setReports([...reports, report]);
+    
     setNewReport({
       type: "",
       title: "",
       description: "",
       location: "",
       severity: "medium",
+      photos: [],
     });
     // Keep selectedCoordinates so user can add more reports at the same location
     setShowReportModal(false);
@@ -183,12 +213,12 @@ const App = () => {
     );
   };
 
-  const ReportModal = React.useCallback(() => {
+  const ReportModal = React.memo(() => {
     if (!showReportModal) return null;
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-lg w-full max-w-lg max-h-[95vh] overflow-y-auto">
           <div className="p-4 border-b">
             <h3 className="text-lg font-semibold">回報安全問題</h3>
           </div>
@@ -198,7 +228,7 @@ const App = () => {
               <label className="block text-sm font-medium mb-2">問題類型</label>
               <select
                 value={newReport.type}
-                onChange={e => setNewReport(prev => ({ ...prev, type: e.target.value }))}
+                onChange={handleTypeChange}
                 className="w-full p-3 border rounded-lg">
                 <option value="">選擇問題類型...</option>
                 {reportTypes.map(type => (
@@ -214,20 +244,29 @@ const App = () => {
               <input
                 type="text"
                 value={newReport.title}
-                onChange={e => setNewReport(prev => ({ ...prev, title: e.target.value }))}
+                onChange={handleTitleChange}
                 className="w-full p-3 border rounded-lg"
                 placeholder="問題的簡要描述"
+                maxLength={200}
               />
+              <div className="text-xs text-gray-500 mt-1">
+                {newReport.title.length}/200 字元
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium mb-2">詳細描述</label>
               <textarea
                 value={newReport.description}
-                onChange={e => setNewReport(prev => ({ ...prev, description: e.target.value }))}
-                className="w-full p-3 border rounded-lg h-24 resize-none"
+                onChange={handleDescriptionChange}
+                className="w-full p-3 border rounded-lg min-h-32 resize-y"
                 placeholder="提供更多關於安全問題的詳細資訊..."
+                maxLength={1000}
+                rows={4}
               />
+              <div className="text-xs text-gray-500 mt-1">
+                {newReport.description.length}/1000 字元
+              </div>
             </div>
 
             <div>
@@ -250,10 +289,14 @@ const App = () => {
                   <input
                     type="text"
                     value={newReport.location}
-                    onChange={e => setNewReport(prev => ({ ...prev, location: e.target.value }))}
+                    onChange={handleLocationChange}
                     className="w-full p-3 border rounded-lg"
                     placeholder="選填：新增地址或路口名稱"
+                    maxLength={150}
                   />
+                  <div className="text-xs text-gray-500 mt-1">
+                    {newReport.location.length}/150 字元
+                  </div>
                 </div>
               ) : (
                 <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -266,12 +309,85 @@ const App = () => {
               <label className="block text-sm font-medium mb-2">嚴重程度</label>
               <select
                 value={newReport.severity}
-                onChange={e => setNewReport(prev => ({ ...prev, severity: e.target.value }))}
+                onChange={handleSeverityChange}
                 className="w-full p-3 border rounded-lg">
                 <option value="low">低 - 輕微不便</option>
                 <option value="medium">中 - 中等安全疑慮</option>
                 <option value="high">高 - 立即危險</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">照片 (選填)</label>
+              <div className="space-y-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={e => {
+                    const files = Array.from(e.target.files);
+                    if (files.length === 0) return;
+                    
+                    setUploadingPhotos(true);
+                    let processedCount = 0;
+                    
+                    files.forEach(file => {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        const newPhoto = {
+                          id: Date.now() + Math.random(),
+                          file: file,
+                          preview: event.target.result,
+                          base64: event.target.result
+                        };
+                        setNewReport(prev => ({ ...prev, photos: [...prev.photos, newPhoto] }));
+                        
+                        processedCount++;
+                        if (processedCount === files.length) {
+                          setUploadingPhotos(false);
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    });
+                  }}
+                  className="w-full p-3 border rounded-lg"
+                />
+                
+                {uploadingPhotos && (
+                  <div className="text-center py-2">
+                    <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
+                      <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                      <span>正在處理照片...</span>
+                    </div>
+                  </div>
+                )}
+                
+                {newReport.photos.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {newReport.photos.map((photo, index) => (
+                      <div key={photo.id} className="relative">
+                        <img
+                          src={photo.preview}
+                          alt={`Upload ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewReport(prev => ({
+                              ...prev,
+                              photos: prev.photos.filter(p => p.id !== photo.id)
+                            }));
+                          }}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -288,7 +404,7 @@ const App = () => {
         </div>
       </div>
     );
-  }, [showReportModal, newReport, selectedCoordinates, handleSubmitReport]);
+  });
 
   return (
     <div className="mx-auto h-screen bg-gray-50 flex flex-col overflow-hidden lg:flex-row">
