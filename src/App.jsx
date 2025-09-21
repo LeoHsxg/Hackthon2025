@@ -12,7 +12,6 @@ import ProfileView from "./components/ProfileView";
 import ReportModal from "./components/ReportModal";
 import { initialReports } from "./data/reports";
 import { roadDangerLevels } from "./data/roadDangerLevels";
-import { reportTypes } from "./data/reportTypes";
 import "./App.css";
 
 const App = () => {
@@ -22,13 +21,13 @@ const App = () => {
   const [reports, setReports] = useState(initialReports);
   const [expandedGroups, setExpandedGroups] = useState(new Set());
   const [selectedCoordinates, setSelectedCoordinates] = useState(null);
-  
+
   // 用戶系統
   const [currentUser] = useState({
     id: "user_001",
     name: "陳大米",
     totalLikes: 25,
-    communityHelps: 8
+    communityHelps: 8,
   });
 
   const [newReport, setNewReport] = useState({
@@ -41,39 +40,18 @@ const App = () => {
   });
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
 
-  // Input handlers
-  const handleTitleChange = (e) => {
-    setNewReport(prev => ({ ...prev, title: e.target.value }));
-  };
-
-  const handleDescriptionChange = (e) => {
-    setNewReport(prev => ({ ...prev, description: e.target.value }));
-  };
-
-  const handleLocationChange = (e) => {
-    setNewReport(prev => ({ ...prev, location: e.target.value }));
-  };
-
-  const handleTypeChange = (e) => {
-    setNewReport(prev => ({ ...prev, type: e.target.value }));
-  };
-
-  const handleSeverityChange = (e) => {
-    setNewReport(prev => ({ ...prev, severity: e.target.value }));
-  };
-
   const [roadDangerData] = useState(roadDangerLevels);
 
   // 計算用戶統計數據
   const userStats = React.useMemo(() => {
     const userReports = reports.filter(report => report.reportedBy === currentUser.id);
     const resolvedReports = userReports.filter(report => report.status === "resolved");
-    
+
     return {
       totalReports: userReports.length,
       resolvedReports: resolvedReports.length,
       totalLikes: currentUser.totalLikes,
-      communityHelps: currentUser.communityHelps
+      communityHelps: currentUser.communityHelps,
     };
   }, [reports, currentUser]);
 
@@ -162,12 +140,12 @@ const App = () => {
       photos: newReport.photos.map(photo => ({
         id: photo.id,
         url: photo.base64, // Using base64 data URL
-        filename: photo.file.name
-      }))
+        filename: photo.file.name,
+      })),
     };
 
     setReports([...reports, report]);
-    
+
     setNewReport({
       type: "",
       title: "",
@@ -235,8 +213,6 @@ const App = () => {
     );
   };
 
-
-
   return (
     <div className="mx-auto h-screen bg-gray-50 flex flex-col overflow-hidden lg:flex-row">
       {/* Header */}
@@ -274,37 +250,37 @@ const App = () => {
         </button>
       </div>
 
-        {/* Main Content */}
-        <div className="flex-1 overflow-hidden">
-          {activeTab === "map" && (
-            <MapView
-              reports={reports}
-              onShowReportModal={() => setShowReportModal(true)}
-              onMapClick={handleMapClick}
-              onMarkerClick={handleMarkerClick}
-            />
-          )}
-          {activeTab === "reports" && (
-            <ReportsView
-              reports={reports}
-              groupedReports={groupedReports}
-              expandedGroups={expandedGroups}
-              onToggleGroup={toggleGroupExpansion}
-              onVote={handleVote}
-              onSelectReport={setSelectedReport}
-              getSeverityColor={getSeverityColor}
-              getStatusColor={getStatusColor}
-            />
-          )}
-          {activeTab === "danger" && (
-            <DangerLevelsView roadDangerData={roadDangerData} getSeverityColor={getSeverityColor} getRoadDangerColor={getRoadDangerColor} />
-          )}
-          {activeTab === "community" && <CommunityView />}
-          {activeTab === "profile" && <ProfileView userStats={userStats} currentUser={currentUser} />}
-        </div>
+      {/* Main Content */}
+      <div className="flex-1 overflow-hidden">
+        {activeTab === "map" && (
+          <MapView
+            reports={reports}
+            onShowReportModal={() => setShowReportModal(true)}
+            onMapClick={handleMapClick}
+            onMarkerClick={handleMarkerClick}
+          />
+        )}
+        {activeTab === "reports" && (
+          <ReportsView
+            reports={reports}
+            groupedReports={groupedReports}
+            expandedGroups={expandedGroups}
+            onToggleGroup={toggleGroupExpansion}
+            onVote={handleVote}
+            onSelectReport={setSelectedReport}
+            getSeverityColor={getSeverityColor}
+            getStatusColor={getStatusColor}
+          />
+        )}
+        {activeTab === "danger" && (
+          <DangerLevelsView roadDangerData={roadDangerData} getSeverityColor={getSeverityColor} getRoadDangerColor={getRoadDangerColor} />
+        )}
+        {activeTab === "community" && <CommunityView />}
+        {activeTab === "profile" && <ProfileView userStats={userStats} currentUser={currentUser} />}
+      </div>
 
       {/* Report Modal */}
-      <ReportModal 
+      <ReportModal
         showReportModal={showReportModal}
         newReport={newReport}
         setNewReport={setNewReport}
@@ -367,4 +343,3 @@ const App = () => {
 };
 
 export default App;
-
