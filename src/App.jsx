@@ -21,6 +21,14 @@ const App = () => {
   const [reports, setReports] = useState(initialReports);
   const [expandedGroups, setExpandedGroups] = useState(new Set());
   const [selectedCoordinates, setSelectedCoordinates] = useState(null);
+  
+  // 用戶系統
+  const [currentUser] = useState({
+    id: "user_001",
+    name: "陳大米",
+    totalLikes: 25,
+    communityHelps: 8
+  });
 
   const [newReport, setNewReport] = useState({
     type: "",
@@ -31,6 +39,19 @@ const App = () => {
   });
 
   const [roadDangerData] = useState(roadDangerLevels);
+
+  // 計算用戶統計數據
+  const userStats = React.useMemo(() => {
+    const userReports = reports.filter(report => report.reportedBy === currentUser.id);
+    const resolvedReports = userReports.filter(report => report.status === "resolved");
+    
+    return {
+      totalReports: userReports.length,
+      resolvedReports: resolvedReports.length,
+      totalLikes: currentUser.totalLikes,
+      communityHelps: currentUser.communityHelps
+    };
+  }, [reports, currentUser]);
 
   // 生成分組報告數據
   const groupedReports = React.useMemo(() => {
@@ -109,7 +130,7 @@ const App = () => {
       coordinates: selectedCoordinates,
       location: newReport.location || `位置 ${selectedCoordinates.lat.toFixed(4)}, ${selectedCoordinates.lng.toFixed(4)}`,
       status: "pending",
-      reportedBy: "current_user",
+      reportedBy: currentUser.id,
       reportedAt: new Date(),
       upvotes: 0,
       downvotes: 0,
@@ -353,7 +374,7 @@ const App = () => {
             <DangerLevelsView roadDangerData={roadDangerData} getSeverityColor={getSeverityColor} getRoadDangerColor={getRoadDangerColor} />
           )}
           {activeTab === "community" && <CommunityView />}
-          {activeTab === "profile" && <ProfileView />}
+          {activeTab === "profile" && <ProfileView userStats={userStats} currentUser={currentUser} />}
         </div>
 
       {/* Report Modal */}

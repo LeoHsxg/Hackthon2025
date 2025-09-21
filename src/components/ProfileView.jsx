@@ -1,17 +1,25 @@
 import React from "react";
 import { User, Edit, CheckCircle, Award, Heart, Trophy, ChevronRight } from "lucide-react";
 
-const ProfileView = () => {
-  // 模擬用戶數據
+const ProfileView = ({ userStats, currentUser }) => {
+  // 使用傳入的用戶統計數據
+  const totalReports = userStats?.totalReports || 0;
+  const resolvedReports = userStats?.resolvedReports || 0;
+  const totalLikes = userStats?.totalLikes || 0;
+  const communityHelps = userStats?.communityHelps || 0;
+  
+  // 檢查是否達到冠軍市民
+  const isChampion = totalReports >= 10;
+  
   const userData = {
-    name: "陳大米",
-    totalReports: 47,
-    resolvedReports: 17,
+    name: currentUser?.name || "陳大米",
+    totalReports,
+    resolvedReports,
     achievements: [
       {
         id: 1,
         title: "積極市民",
-        description: "回報超過 10 個問題",
+        description: "回報超過 5 個問題",
         icon: <Award className="w-6 h-6 text-yellow-500" />,
         completed: true,
         progress: 100
@@ -26,7 +34,7 @@ const ProfileView = () => {
       },
       {
         id: 3,
-        title: "Community Supporter",
+        title: "社群支持者",
         description: "提供超過 20 個讚",
         icon: <Heart className="w-6 h-6 text-red-500" />,
         completed: true,
@@ -35,11 +43,30 @@ const ProfileView = () => {
       {
         id: 4,
         title: "冠軍市民",
-        description: "回報超過 50 個問題",
+        description: "回報超過 10 個問題",
         icon: <Trophy className="w-6 h-6 text-purple-500" />,
-        completed: false,
-        progress: 94
-      }
+        completed: isChampion,
+        progress: isChampion ? 100 : Math.round((totalReports / 10) * 100)
+      },
+      // 冠軍市民解鎖的額外成就
+      ...(isChampion ? [
+        {
+          id: 5,
+          title: "超級點讚王",
+          description: "提供超過 50 個讚",
+          icon: <Heart className="w-6 h-6 text-pink-500" />,
+          completed: totalLikes >= 50,
+          progress: totalLikes >= 50 ? 100 : Math.round((totalLikes / 50) * 100)
+        },
+        {
+          id: 6,
+          title: "社群導師",
+          description: "幫助其他用戶超過 10 次",
+          icon: <User className="w-6 h-6 text-indigo-500" />,
+          completed: communityHelps >= 10,
+          progress: communityHelps >= 10 ? 100 : Math.round((communityHelps / 10) * 100)
+        }
+      ] : [])
     ]
   };
 
